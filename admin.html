@@ -122,134 +122,134 @@
     <template x-if="authState === 'signed_in'">
         <div class="flex flex-col flex-grow">
 
-            <!-- 頂部列 -->
+            <!-- 頂部列（緊湊版：標題 + 操作 + 分頁全在一列） -->
             <header class="bg-gradient-to-r from-rose-700 to-rose-900 text-white shadow-lg sticky top-0 z-20">
-                <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h1 class="text-lg md:text-xl font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-shield-halved"></i>
-                            後台唱票系統
-                        </h1>
-                        <p class="text-rose-100 text-xs" x-text="meta.title"></p>
+                <div class="max-w-[1600px] mx-auto px-3 lg:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                        <div class="leading-tight">
+                            <h1 class="text-sm md:text-base font-bold">後台唱票系統</h1>
+                            <p class="text-rose-100 text-[10px]" x-text="meta.title"></p>
+                        </div>
+
+                        <!-- 分頁切換放標題旁邊 -->
+                        <div class="ml-3 flex gap-0.5 bg-black/20 rounded-lg p-0.5">
+                            <button @click="tab = 'count'"
+                                    :class="tab === 'count' ? 'bg-white text-rose-700' : 'text-white hover:bg-white/10'"
+                                    class="px-3 py-1 rounded-md text-xs font-medium transition-colors">
+                                <i class="fa-solid fa-square-check mr-1"></i>唱票
+                            </button>
+                            <button @click="tab = 'settings'"
+                                    :class="tab === 'settings' ? 'bg-white text-rose-700' : 'text-white hover:bg-white/10'"
+                                    class="px-3 py-1 rounded-md text-xs font-medium transition-colors">
+                                <i class="fa-solid fa-gear mr-1"></i>設定
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <!-- 鎖定狀態 -->
+                    <div class="flex items-center gap-1.5">
                         <button @click="toggleLock()"
                                 :class="meta.locked ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500 hover:bg-emerald-600'"
-                                class="text-white text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-medium">
+                                class="text-white text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 font-medium">
                             <i class="fa-solid" :class="meta.locked ? 'fa-lock' : 'fa-lock-open'"></i>
                             <span x-text="meta.locked ? '已封存' : '計票中'"></span>
                         </button>
 
-                        <!-- 連線指示 -->
-                        <div class="flex items-center gap-1.5 bg-white/15 backdrop-blur px-3 py-1.5 rounded-lg text-sm">
+                        <div class="flex items-center gap-1 bg-white/15 backdrop-blur px-2.5 py-1 rounded-lg text-xs">
                             <span class="w-2 h-2 rounded-full" :class="connected ? 'bg-emerald-300' : 'bg-rose-300'"></span>
                             <span x-text="connected ? '已連線' : '中斷'"></span>
                         </div>
 
                         <button @click="signOut()"
-                                class="bg-white/15 hover:bg-white/25 text-white text-sm px-3 py-1.5 rounded-lg">
+                                class="bg-white/15 hover:bg-white/25 text-white text-xs px-2.5 py-1 rounded-lg">
                             <i class="fa-solid fa-arrow-right-from-bracket"></i> 登出
                         </button>
                     </div>
                 </div>
-
-                <!-- 分頁切換 -->
-                <div class="max-w-7xl mx-auto px-4 flex gap-1">
-                    <button @click="tab = 'count'"
-                            :class="tab === 'count' ? 'bg-white/20 border-white' : 'border-transparent hover:bg-white/10'"
-                            class="px-4 py-2 border-b-2 text-sm font-medium transition-colors">
-                        <i class="fa-solid fa-square-check mr-1"></i> 唱票
-                    </button>
-                    <button @click="tab = 'settings'"
-                            :class="tab === 'settings' ? 'bg-white/20 border-white' : 'border-transparent hover:bg-white/10'"
-                            class="px-4 py-2 border-b-2 text-sm font-medium transition-colors">
-                        <i class="fa-solid fa-gear mr-1"></i> 設定
-                    </button>
-                </div>
             </header>
 
-            <main class="flex-grow max-w-7xl mx-auto w-full px-4 py-6">
+            <main class="flex-grow max-w-[1600px] mx-auto w-full px-3 lg:px-4 py-3 flex flex-col gap-3">
 
                 <!-- ============= 唱票分頁 ============= -->
-                <div x-show="tab === 'count'">
+                <div x-show="tab === 'count'" class="flex flex-col gap-3 flex-grow">
 
-                    <!-- 統計列 -->
-                    <div class="bg-white rounded-xl shadow-sm p-4 mb-5 flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-6">
+                    <!-- 統計列（緊湊版） -->
+                    <div class="bg-white rounded-xl shadow-sm px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-5">
                             <div>
-                                <div class="text-xs text-slate-500 font-medium uppercase tracking-wider">總票數</div>
-                                <div class="text-3xl font-black text-slate-800 tabular-nums" x-text="totalVotes"></div>
+                                <div class="text-[10px] text-slate-500 font-medium uppercase tracking-wider leading-tight">總票數</div>
+                                <div class="text-2xl font-black text-slate-800 tabular-nums leading-tight" x-text="totalVotes"></div>
                             </div>
-                            <div class="w-px h-10 bg-slate-200"></div>
+                            <div class="w-px h-9 bg-slate-200"></div>
                             <div>
-                                <div class="text-xs text-slate-500 font-medium uppercase tracking-wider">最高票</div>
-                                <div class="text-3xl font-black text-blue-600 tabular-nums" x-text="maxVotes"></div>
+                                <div class="text-[10px] text-slate-500 font-medium uppercase tracking-wider leading-tight">最高票</div>
+                                <div class="text-2xl font-black text-blue-600 tabular-nums leading-tight" x-text="maxVotes"></div>
                             </div>
                         </div>
 
                         <div class="flex gap-2">
                             <button @click="undoLast()" :disabled="!lastAction || busy"
-                                    class="bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5">
+                                    class="bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
                                 <i class="fa-solid fa-rotate-left"></i> 復原上次
                             </button>
                             <button @click="resetVotes()" :disabled="busy"
-                                    class="bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5">
+                                    class="bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
                                 <i class="fa-solid fa-arrows-rotate"></i> 票數歸零
                             </button>
                         </div>
                     </div>
 
                     <!-- 鎖定提示 -->
-                    <div x-show="meta.locked" class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl mb-5 text-sm flex items-start gap-2">
+                    <div x-show="meta.locked" class="bg-amber-50 border border-amber-200 text-amber-800 p-2.5 rounded-xl text-xs flex items-start gap-2">
                         <i class="fa-solid fa-lock mt-0.5"></i>
                         <span>計票已封存，無法繼續加票。如需修正請點右上角解鎖。</span>
                     </div>
 
-                    <!-- 候選人卡片 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- 候選人卡片：手機 1 欄 → 平板 2/3 欄 → 桌機 6 欄一排 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-3 flex-grow">
                         <template x-for="c in sortedCandidates" :key="c.id">
                             <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative"
                                  :id="'admin-card-'+c.id">
 
-                                <!-- 卡頭：號碼 + 姓名 + 照片 -->
-                                <div class="relative bg-gradient-to-b from-slate-50 to-white p-4 border-b border-slate-100">
-                                    <div class="absolute top-3 left-3 z-10 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-3 py-1.5 rounded-xl shadow-lg ring-2 ring-white flex items-baseline gap-0.5">
-                                        <span class="text-2xl font-black leading-none tabular-nums" x-text="c.id"></span>
-                                        <span class="text-xs font-bold opacity-90">號</span>
+                                <!-- 卡頭：號碼 + 照片 + 姓名 -->
+                                <div class="relative bg-gradient-to-b from-slate-50 to-white p-2.5 border-b border-slate-100">
+                                    <!-- 號碼徽章（左上） -->
+                                    <div class="absolute top-2 left-2 z-10 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-2 py-0.5 rounded-lg shadow-lg ring-2 ring-white flex items-baseline gap-0.5">
+                                        <span class="text-base lg:text-lg font-black leading-none tabular-nums" x-text="c.id"></span>
+                                        <span class="text-[9px] font-bold opacity-90">號</span>
                                     </div>
-                                    <div class="flex flex-col items-center pt-4">
-                                        <div class="w-20 h-20 rounded-full overflow-hidden bg-slate-200 border-4 border-white shadow-md mb-2">
+
+                                    <div class="flex flex-col items-center pt-3">
+                                        <div class="w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden bg-slate-200 border-2 border-white shadow-md mb-1.5">
                                             <template x-if="c.imageUrl">
                                                 <img :src="c.imageUrl" :alt="c.name" class="w-full h-full object-cover" @error="$el.style.display='none'">
                                             </template>
                                             <template x-if="!c.imageUrl">
-                                                <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-400 text-3xl"></i></div>
+                                                <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-400 text-2xl"></i></div>
                                             </template>
                                         </div>
-                                        <h3 class="text-lg font-bold text-slate-800" x-text="c.name"></h3>
+                                        <h3 class="text-sm lg:text-base font-bold text-slate-800 truncate w-full text-center" x-text="c.name"></h3>
                                     </div>
                                 </div>
 
                                 <!-- 票數 + 按鈕 -->
-                                <div class="p-5 flex flex-col gap-4">
+                                <div class="p-2.5 lg:p-3 flex flex-col gap-2 flex-grow justify-between">
                                     <div class="text-center">
-                                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">目前得票</div>
-                                        <div class="text-5xl font-black text-slate-800 tabular-nums" :id="'cnt-'+c.id" x-text="c.votes"></div>
+                                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">得票</div>
+                                        <div class="text-4xl lg:text-5xl font-black text-slate-800 tabular-nums leading-none" :id="'cnt-'+c.id" x-text="c.votes"></div>
                                     </div>
 
-                                    <div class="flex gap-2">
+                                    <div class="flex gap-1.5">
                                         <button @click="changeVote(c.id, -1, $event)"
                                                 :disabled="c.votes === 0 || meta.locked || busy"
-                                                class="vote-btn relative overflow-hidden w-14 h-14 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xl shadow-sm"
+                                                class="vote-btn relative overflow-hidden w-10 h-12 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-base shadow-sm flex-shrink-0"
                                                 title="減少一票（修正）">
                                             <i class="fa-solid fa-minus pointer-events-none"></i>
                                         </button>
                                         <button @click="changeVote(c.id, +1, $event)"
                                                 :disabled="meta.locked || busy"
-                                                class="vote-btn vote-btn-add relative overflow-hidden flex-grow h-14 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-xl font-bold shadow-md flex items-center justify-center gap-2">
-                                            <i class="fa-solid fa-plus pointer-events-none"></i><span class="pointer-events-none">加 1 票</span>
+                                                class="vote-btn vote-btn-add relative overflow-hidden flex-grow h-12 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-base lg:text-lg font-bold shadow-md flex items-center justify-center gap-1.5">
+                                            <i class="fa-solid fa-plus pointer-events-none"></i><span class="pointer-events-none">+1 票</span>
                                         </button>
                                     </div>
                                 </div>
@@ -641,6 +641,6 @@
 
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.4"></script>
+    <script defer src="version-check.js?v=1.0.5"></script>
 </body>
 </html>
