@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.10">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.10">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.10">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.11">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.11">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.11">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.10">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.11">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -311,25 +311,53 @@
                                 <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col md:flex-row gap-3 items-start md:items-center">
                                     <div class="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-lg" x-text="c.id"></div>
 
-                                    <div class="flex-shrink-0 w-14 h-14 rounded-full overflow-hidden bg-slate-200 border-2 border-white shadow-sm">
-                                        <template x-if="c.imageUrl">
-                                            <img :src="c.imageUrl" :alt="c.name" class="w-full h-full object-cover" @error="$el.style.display='none'">
-                                        </template>
-                                        <template x-if="!c.imageUrl">
-                                            <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-400 text-xl"></i></div>
-                                        </template>
+                                    <!-- 大頭像 + 上傳按鈕 hover overlay -->
+                                    <div class="relative flex-shrink-0 w-16 h-16 group">
+                                        <div class="w-full h-full rounded-full overflow-hidden bg-slate-200 border-2 border-white shadow-sm">
+                                            <template x-if="c.imageUrl">
+                                                <img :src="c.imageUrl" :alt="c.name" class="w-full h-full object-cover" @error="$el.style.display='none'">
+                                            </template>
+                                            <template x-if="!c.imageUrl">
+                                                <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-400 text-2xl"></i></div>
+                                            </template>
+                                        </div>
+                                        <!-- 上傳中 spinner overlay -->
+                                        <div x-show="uploadingId === c.id"
+                                             class="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                                            <i class="fa-solid fa-circle-notch fa-spin text-white text-xl"></i>
+                                        </div>
+                                        <!-- 點擊上傳（hover 顯示相機圖示） -->
+                                        <button @click="$refs['file-' + c.id].click()"
+                                                :disabled="uploadingId === c.id"
+                                                class="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-colors"
+                                                title="點擊上傳新照片">
+                                            <i class="fa-solid fa-camera text-white text-lg opacity-0 group-hover:opacity-100"></i>
+                                        </button>
+                                        <input type="file" accept="image/*" class="hidden"
+                                               :ref="'file-' + c.id"
+                                               @change="uploadPhoto(c, $event)">
                                     </div>
 
-                                    <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                                    <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
                                         <input type="text" x-model="c.name" placeholder="姓名"
-                                               class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none">
-                                        <input type="text" x-model="c.imageUrl" placeholder="照片網址或路徑（如 assets/photos/1.jpg）"
-                                               class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none">
+                                               class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none md:col-span-1">
+
+                                        <!-- 上傳按鈕（明顯的 CTA） -->
+                                        <button @click="$refs['file-' + c.id].click()"
+                                                :disabled="uploadingId === c.id"
+                                                class="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-400 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 md:col-span-1">
+                                            <i class="fa-solid" :class="uploadingId === c.id ? 'fa-circle-notch fa-spin' : 'fa-cloud-arrow-up'"></i>
+                                            <span x-text="uploadingId === c.id ? '上傳中...' : '上傳照片'"></span>
+                                        </button>
+
+                                        <input type="text" x-model="c.imageUrl" placeholder="照片網址 / 路徑（或上傳後自動填入）"
+                                               class="px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none md:col-span-1 truncate"
+                                               title="上傳後此欄位會變成 data:image/jpeg;base64,...">
                                     </div>
 
                                     <div class="flex gap-2 w-full md:w-auto">
                                         <button @click="saveOneCandidate(c)"
-                                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium" title="儲存此候選人">
+                                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium" title="儲存姓名與照片到 Firebase">
                                             <i class="fa-solid fa-floppy-disk"></i>
                                         </button>
                                         <button @click="removeCandidate(c.id)"
@@ -424,6 +452,7 @@
                 connected: false,
                 busy: false,
                 lastAction: null, // {type:'add'|'sub', id, by}
+                uploadingId: null, // 哪個候選人正在上傳照片
 
                 toast: { show: false, msg: '', type: 'success' },
 
@@ -618,6 +647,79 @@
                     this.notify(`已儲存 ${c.id} 號 ${c.name}`);
                 },
 
+                // 上傳照片：縮圖到 400px JPEG → base64 → 直接寫入 RTDB imageUrl
+                async uploadPhoto(c, event) {
+                    const input = event.target;
+                    const file = input.files && input.files[0];
+                    input.value = ''; // 清掉 input 讓同檔案能再選
+                    if (!file) return;
+
+                    if (!file.type.startsWith('image/')) {
+                        return this.notify('請選擇圖片檔', 'error');
+                    }
+                    // 限制原始檔 < 15MB（縮完會剩 ~80KB）
+                    if (file.size > 15 * 1024 * 1024) {
+                        return this.notify('檔案過大（請選 < 15MB 圖片）', 'error');
+                    }
+
+                    this.uploadingId = c.id;
+                    try {
+                        const dataUrl = await this.resizeImage(file, 400, 0.85);
+                        // 太大 → 再降 quality
+                        let final = dataUrl;
+                        if (final.length > 800 * 1024) {
+                            final = await this.resizeImage(file, 360, 0.75);
+                        }
+                        if (final.length > 800 * 1024) {
+                            final = await this.resizeImage(file, 320, 0.65);
+                        }
+
+                        c.imageUrl = final;
+                        // 自動寫入 RTDB
+                        await set(ref(db, `election/candidates/${c.id}`), {
+                            id: c.id,
+                            name: c.name || '',
+                            imageUrl: final,
+                            votes: Number(c.votes) || 0
+                        });
+                        const sizeKb = Math.round(final.length / 1024);
+                        this.notify(`✓ ${c.id} 號 ${c.name} 照片已更新（${sizeKb} KB）`);
+                    } catch (e) {
+                        this.notify('上傳失敗：' + e.message, 'error');
+                    } finally {
+                        this.uploadingId = null;
+                    }
+                },
+
+                // Canvas 縮圖：等比例縮到 maxDim，輸出 JPEG dataURL
+                resizeImage(file, maxDim, quality) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onerror = () => reject(new Error('讀檔失敗'));
+                        reader.onload = () => {
+                            const img = new Image();
+                            img.onerror = () => reject(new Error('圖片解析失敗'));
+                            img.onload = () => {
+                                let { width, height } = img;
+                                if (width > height) {
+                                    if (width > maxDim) { height *= maxDim / width; width = maxDim; }
+                                } else {
+                                    if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+                                }
+                                const canvas = document.createElement('canvas');
+                                canvas.width = Math.round(width);
+                                canvas.height = Math.round(height);
+                                const ctx = canvas.getContext('2d');
+                                ctx.imageSmoothingQuality = 'high';
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve(canvas.toDataURL('image/jpeg', quality));
+                            };
+                            img.src = reader.result;
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                },
+
                 async addCandidate() {
                     const ids = this.candidates.map(c => c.id);
                     let newId = 1;
@@ -655,6 +757,6 @@
 
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.10"></script>
+    <script defer src="version-check.js?v=1.0.11"></script>
 </body>
 </html>
