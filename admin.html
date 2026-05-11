@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>後台唱票｜石門國小自治市市長選舉</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <style>
@@ -323,6 +322,8 @@
 
     <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 
+    <!-- Module 必須在 Alpine 之前載入並設定 window.adminApp，
+         否則 Alpine 自啟時找不到 adminApp 會整片噴錯 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import {
@@ -544,5 +545,8 @@
             };
         };
     </script>
+
+    <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
