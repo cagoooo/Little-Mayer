@@ -206,49 +206,46 @@
                     </div>
 
                     <!-- 候選人卡片：手機 1 欄 → 平板 2/3 欄 → 桌機 6 欄一排 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-3 flex-grow">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-3">
                         <template x-for="c in sortedCandidates" :key="c.id">
                             <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative"
                                  :id="'admin-card-'+c.id">
 
-                                <!-- 卡頭：號碼 + 照片 + 姓名 -->
-                                <div class="relative bg-gradient-to-b from-slate-50 to-white p-2.5 border-b border-slate-100">
-                                    <!-- 號碼徽章（左上） -->
-                                    <div class="absolute top-2 left-2 z-10 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-2 py-0.5 rounded-lg shadow-lg ring-2 ring-white flex items-baseline gap-0.5">
-                                        <span class="text-base lg:text-lg font-black leading-none tabular-nums" x-text="c.id"></span>
-                                        <span class="text-[9px] font-bold opacity-90">號</span>
-                                    </div>
-
-                                    <div class="flex flex-col items-center pt-3">
-                                        <div class="w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden bg-slate-200 border-2 border-white shadow-md mb-1.5">
-                                            <template x-if="c.imageUrl">
-                                                <img :src="c.imageUrl" :alt="c.name" class="w-full h-full object-cover" @error="$el.style.display='none'">
-                                            </template>
-                                            <template x-if="!c.imageUrl">
-                                                <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-400 text-2xl"></i></div>
-                                            </template>
-                                        </div>
-                                        <h3 class="text-sm lg:text-base font-bold text-slate-800 truncate w-full text-center" x-text="c.name"></h3>
-                                    </div>
+                                <!-- 號碼徽章（漂浮在照片左上） -->
+                                <div class="absolute top-2 left-2 z-10 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-2.5 py-1 rounded-lg shadow-lg ring-2 ring-white flex items-baseline gap-0.5">
+                                    <span class="text-lg lg:text-xl font-black leading-none tabular-nums" x-text="c.id"></span>
+                                    <span class="text-[10px] font-bold opacity-90">號</span>
                                 </div>
 
-                                <!-- 票數 + 按鈕 -->
-                                <div class="p-2.5 lg:p-3 flex flex-col gap-2 flex-grow justify-between">
-                                    <div class="text-center">
-                                        <div class="text-[10px] text-slate-500 uppercase tracking-wider">得票</div>
-                                        <div class="text-4xl lg:text-5xl font-black text-slate-800 tabular-nums leading-none" :id="'cnt-'+c.id" x-text="c.votes"></div>
+                                <!-- 大照片 (aspect-square 填滿卡寬) -->
+                                <div class="relative bg-gradient-to-b from-slate-100 to-slate-200 aspect-square overflow-hidden">
+                                    <template x-if="c.imageUrl">
+                                        <img :src="c.imageUrl" :alt="c.name" class="w-full h-full object-cover" @error="$el.style.display='none'">
+                                    </template>
+                                    <template x-if="!c.imageUrl">
+                                        <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-400 text-5xl"></i></div>
+                                    </template>
+                                </div>
+
+                                <!-- 姓名 + 票數 + 按鈕 -->
+                                <div class="p-2 lg:p-2.5 flex flex-col gap-1.5">
+                                    <h3 class="text-base lg:text-lg font-bold text-slate-800 text-center truncate" x-text="c.name"></h3>
+
+                                    <div class="flex items-end justify-center gap-1.5 leading-none">
+                                        <span class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">得票</span>
+                                        <span class="text-4xl lg:text-5xl font-black text-slate-800 tabular-nums" :id="'cnt-'+c.id" x-text="c.votes"></span>
                                     </div>
 
-                                    <div class="flex gap-1.5">
+                                    <div class="flex gap-1.5 mt-1">
                                         <button @click="changeVote(c.id, -1, $event)"
                                                 :disabled="c.votes === 0 || meta.locked || busy"
-                                                class="vote-btn relative overflow-hidden w-10 h-12 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-base shadow-sm flex-shrink-0"
+                                                class="vote-btn relative overflow-hidden w-10 h-11 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-base shadow-sm flex-shrink-0"
                                                 title="減少一票（修正）">
                                             <i class="fa-solid fa-minus pointer-events-none"></i>
                                         </button>
                                         <button @click="changeVote(c.id, +1, $event)"
                                                 :disabled="meta.locked || busy"
-                                                class="vote-btn vote-btn-add relative overflow-hidden flex-grow h-12 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-base lg:text-lg font-bold shadow-md flex items-center justify-center gap-1.5">
+                                                class="vote-btn vote-btn-add relative overflow-hidden flex-grow h-11 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-base lg:text-lg font-bold shadow-md flex items-center justify-center gap-1.5">
                                             <i class="fa-solid fa-plus pointer-events-none"></i><span class="pointer-events-none">+1 票</span>
                                         </button>
                                     </div>
@@ -641,6 +638,6 @@
 
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.6"></script>
+    <script defer src="version-check.js?v=1.0.7"></script>
 </body>
 </html>
