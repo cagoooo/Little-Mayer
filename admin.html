@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.11">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.11">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.11">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.12">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.12">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.12">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.11">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.12">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -177,6 +177,13 @@
                             <span x-text="connected ? '已連線' : '中斷'"></span>
                         </div>
 
+                        <!-- 靜音切換 -->
+                        <button @click="toggleMute()"
+                                class="bg-white/15 hover:bg-white/25 text-white text-xs px-2.5 py-1 rounded-lg"
+                                :title="muted ? '目前靜音，點擊恢復音效' : '目前有音效，點擊靜音'">
+                            <i class="fa-solid" :class="muted ? 'fa-volume-xmark' : 'fa-volume-high'"></i>
+                        </button>
+
                         <button @click="signOut()"
                                 class="bg-white/15 hover:bg-white/25 text-white text-xs px-2.5 py-1 rounded-lg">
                             <i class="fa-solid fa-arrow-right-from-bracket"></i> 登出
@@ -188,7 +195,7 @@
             <main class="flex-grow max-w-[1600px] mx-auto w-full px-3 lg:px-4 py-3 flex flex-col gap-3">
 
                 <!-- ============= 唱票分頁 ============= -->
-                <div x-show="tab === 'count'" class="flex flex-col gap-3 flex-grow">
+                <div x-show="tab === 'count'" class="flex flex-col gap-3 flex-grow" id="screenshot-area">
 
                     <!-- 統計列（緊湊版） -->
                     <div class="bg-white rounded-xl shadow-sm px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
@@ -204,7 +211,18 @@
                             </div>
                         </div>
 
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 flex-wrap">
+                            <button @click="exportCSV()" :disabled="totalVotes === 0"
+                                    class="bg-emerald-100 hover:bg-emerald-200 disabled:opacity-40 disabled:cursor-not-allowed text-emerald-800 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                                    title="下載開票結果 CSV（Excel 可開）">
+                                <i class="fa-solid fa-file-csv"></i> 匯出 CSV
+                            </button>
+                            <button @click="exportScreenshot()" :disabled="busyShot"
+                                    class="bg-blue-100 hover:bg-blue-200 disabled:opacity-40 disabled:cursor-not-allowed text-blue-800 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                                    title="下載目前畫面截圖 PNG">
+                                <i class="fa-solid" :class="busyShot ? 'fa-circle-notch fa-spin' : 'fa-camera'"></i>
+                                <span x-text="busyShot ? '截圖中...' : '截圖存檔'"></span>
+                            </button>
                             <button @click="undoLast()" :disabled="!lastAction || busy"
                                     class="bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
                                 <i class="fa-solid fa-rotate-left"></i> 復原上次
@@ -451,6 +469,8 @@
                 meta: { ...DEFAULT_META },
                 connected: false,
                 busy: false,
+                busyShot: false,
+                muted: localStorage.getItem('lm_muted') === '1',
                 lastAction: null, // {type:'add'|'sub', id, by}
                 uploadingId: null, // 哪個候選人正在上傳照片
 
@@ -534,9 +554,12 @@
                     if (this.busy) return;
                     this.busy = true;
 
-                    // 立刻觸發按鈕特效，不等網路
+                    // 立刻觸發按鈕特效 + 音效，不等網路
                     if (event) this.spawnRipple(event);
                     this.spawnFloatLabel(id, delta);
+                    if (window.lmSound) {
+                        delta > 0 ? window.lmSound.voteAdd() : window.lmSound.voteSub();
+                    }
 
                     try {
                         await runTransaction(ref(db, `election/candidates/${id}/votes`), (cur) => {
@@ -750,6 +773,110 @@
                     this.toast = { show: true, msg, type };
                     clearTimeout(this._toastT);
                     this._toastT = setTimeout(() => { this.toast.show = false; }, 2200);
+                },
+
+                toggleMute() {
+                    if (window.lmSound) this.muted = window.lmSound.toggle();
+                    else this.muted = !this.muted;
+                    this.notify(this.muted ? '🔇 已靜音' : '🔊 音效已開');
+                    if (!this.muted && window.lmSound) window.lmSound.voteAdd();
+                },
+
+                exportCSV() {
+                    if (this.candidates.length === 0) return this.notify('沒有資料可匯出', 'error');
+                    const total = this.totalVotes;
+
+                    // dense ranking 算名次
+                    const distinct = [...new Set(
+                        this.candidates.filter(c => c.votes > 0).map(c => c.votes)
+                    )].sort((a, b) => b - a);
+                    const rankOf = c => c.votes === 0 ? null : distinct.indexOf(c.votes) + 1;
+
+                    // 排序：票數高→低，相同則 id 小→大
+                    const sorted = [...this.candidates].sort((a, b) => {
+                        if (b.votes !== a.votes) return b.votes - a.votes;
+                        return a.id - b.id;
+                    });
+
+                    const ts = new Date();
+                    const pad = n => String(n).padStart(2, '0');
+                    const tsStr = `${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())} ${pad(ts.getHours())}:${pad(ts.getMinutes())}:${pad(ts.getSeconds())}`;
+
+                    // CSV escape：包含 , " 換行的欄位要用 "" 包，內部 " 變 ""
+                    const esc = v => {
+                        const s = String(v ?? '');
+                        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+                    };
+
+                    const lines = [];
+                    lines.push(esc(this.meta.title || '選舉結果'));
+                    lines.push(`匯出時間,${tsStr}`);
+                    lines.push(`總票數,${total}`);
+                    lines.push(`計票狀態,${this.meta.locked ? '已封存' : '計票中'}`);
+                    lines.push('');
+                    lines.push('排名,號碼,姓名,得票數,得票率');
+                    for (const c of sorted) {
+                        const r = rankOf(c);
+                        const pct = total > 0 ? (c.votes * 100 / total).toFixed(1) + '%' : '0.0%';
+                        lines.push([
+                            r === null ? '—' : r,
+                            c.id,
+                            esc(c.name),
+                            c.votes,
+                            pct
+                        ].join(','));
+                    }
+
+                    // BOM ﻿ 讓 Excel 用 UTF-8 開
+                    const csv = '﻿' + lines.join('\r\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `小市長選舉結果_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+
+                    this.notify('✓ CSV 已下載');
+                },
+
+                async exportScreenshot() {
+                    if (typeof html2canvas !== 'function') {
+                        return this.notify('截圖工具尚未載入，請稍後再試', 'error');
+                    }
+                    const target = document.getElementById('screenshot-area');
+                    if (!target) return this.notify('找不到截圖區域', 'error');
+
+                    this.busyShot = true;
+                    try {
+                        const canvas = await html2canvas(target, {
+                            backgroundColor: '#f1f5f9',
+                            scale: 2,           // 兩倍解析
+                            useCORS: true,
+                            logging: false,
+                            windowWidth: document.documentElement.scrollWidth
+                        });
+                        const ts = new Date();
+                        const pad = n => String(n).padStart(2, '0');
+                        const fname = `小市長選舉截圖_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}.png`;
+                        canvas.toBlob((blob) => {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = fname;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                            this.notify('✓ 截圖已下載');
+                        }, 'image/png');
+                    } catch (e) {
+                        this.notify('截圖失敗：' + e.message, 'error');
+                    } finally {
+                        this.busyShot = false;
+                    }
                 }
             };
         };
@@ -757,6 +884,8 @@
 
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.11"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script defer src="sound.js?v=1.0.12"></script>
+    <script defer src="version-check.js?v=1.0.12"></script>
 </body>
 </html>

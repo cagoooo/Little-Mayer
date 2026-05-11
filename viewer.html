@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.11">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.11">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.11">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.12">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.12">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.12">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.11">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.11">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.12">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.12">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.11">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.12">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -160,6 +160,12 @@
                     <i class="fa-solid fa-scale-balanced"></i>
                     <span x-text="`${leaderCandidates.length} 人並列領先`"></span>
                 </div>
+                <!-- 靜音切換 -->
+                <button @click="toggleMute()"
+                        class="bg-white/15 hover:bg-white/25 text-white text-xs px-2.5 py-1 rounded-full"
+                        :title="muted ? '目前靜音，點擊恢復音效' : '目前有音效，點擊靜音'">
+                    <i class="fa-solid" :class="muted ? 'fa-volume-xmark' : 'fa-volume-high'"></i>
+                </button>
                 <a href="index.html" class="text-white/80 hover:text-white text-xs hidden sm:inline">
                     <i class="fa-solid fa-house mr-0.5"></i> 主頁
                 </a>
@@ -302,6 +308,7 @@
                 connected: false,
                 loadError: null,
                 lastUpdate: '',
+                muted: localStorage.getItem('lm_muted') === '1',
                 _prevVotes: {},
                 _prevLeaderKey: '',
                 _firstLoad: true,
@@ -429,6 +436,12 @@
                     document.body.appendChild(toast);
                     setTimeout(() => toast.remove(), 3100);
 
+                    // 音效
+                    if (window.lmSound) {
+                        if (newLeaders.length > 1) window.lmSound.tieAlert();
+                        else                       window.lmSound.leaderChange();
+                    }
+
                     setTimeout(() => {
                         // 新領先者卡片金光爆炸
                         for (const id of newIds) {
@@ -535,6 +548,14 @@
                     if (r === 2) return 'text-slate-600';
                     if (r === 3) return 'text-amber-700';
                     return 'text-blue-600';
+                },
+                toggleMute() {
+                    if (window.lmSound) {
+                        this.muted = window.lmSound.toggle();
+                        if (!this.muted) window.lmSound.leaderChange();
+                    } else {
+                        this.muted = !this.muted;
+                    }
                 }
             };
         };
@@ -542,6 +563,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.11"></script>
+    <script defer src="sound.js?v=1.0.12"></script>
+    <script defer src="version-check.js?v=1.0.12"></script>
 </body>
 </html>
