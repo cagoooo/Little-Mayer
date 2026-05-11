@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "election": {
+      ".read": true,
+      ".write": "auth != null",
+      "candidates": {
+        "$id": {
+          "votes": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "name": {
+            ".validate": "newData.isString() && newData.val().length <= 30"
+          },
+          "imageUrl": {
+            ".validate": "newData.isString() && newData.val().length <= 500"
+          },
+          "id": {
+            ".validate": "newData.isNumber()"
+          }
+        }
+      },
+      "meta": {
+        "title":    { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "subtitle": { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "locked":   { ".validate": "newData.isBoolean()" }
+      },
+      "log": {
+        ".indexOn": ["ts"]
+      }
+    }
+  }
+}

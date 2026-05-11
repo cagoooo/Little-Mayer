@@ -1,0 +1,24 @@
+# 原始選票 doc（含學生個人資料/照片，不要上 GitHub）
+選票.doc
+*.doc
+*.docx
+_extracted/
+
+# 系統檔
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 編輯器
+.vscode/
+.idea/
+*.swp
+
+# Firebase
+.firebase/
+firebase-debug.log
+.firebaserc
+
+# Node（若日後加 build pipeline）
+node_modules/
+dist/

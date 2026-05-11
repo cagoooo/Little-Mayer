@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>石門國小自治市市長選舉計票系統</title>
+    <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時計票與監票系統">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗳️</text></svg>">
+    <style>
+        body { font-family: 'Noto Sans TC', system-ui, -apple-system, "Microsoft JhengHei", sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex flex-col">
+
+    <main class="flex-grow flex items-center justify-center px-4 py-10">
+        <div class="max-w-5xl w-full">
+
+            <!-- 標題區 -->
+            <div class="text-center mb-12 text-white">
+                <div class="inline-block bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full text-sm font-medium mb-4">
+                    <i class="fa-solid fa-school mr-1"></i> 石門國小
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black mb-3 drop-shadow-lg">
+                    第 29 屆自治市市長選舉
+                </h1>
+                <p class="text-xl text-white/90 font-light">即時計票與監票系統</p>
+            </div>
+
+            <!-- 兩個入口卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- 監票入口（公開） -->
+                <a href="viewer.html" class="card-hover group bg-white rounded-2xl shadow-xl p-8 block">
+                    <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                        <i class="fa-solid fa-tv text-white text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">公開監票畫面</h2>
+                    <p class="text-slate-600 text-sm mb-4 leading-relaxed">
+                        全校班級同步觀看現場開票實況。<br>
+                        即時票數、長條圖、排名一目了然。
+                    </p>
+                    <div class="flex items-center text-blue-600 font-semibold">
+                        進入監票畫面
+                        <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                    <div class="mt-4 inline-block bg-emerald-50 text-emerald-700 text-xs font-medium px-3 py-1 rounded-full">
+                        <i class="fa-solid fa-eye mr-1"></i> 唯讀．無需登入
+                    </div>
+                </a>
+
+                <!-- 後台入口（需登入） -->
+                <a href="admin.html" class="card-hover group bg-white rounded-2xl shadow-xl p-8 block">
+                    <div class="w-20 h-20 bg-gradient-to-br from-rose-400 to-rose-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                        <i class="fa-solid fa-shield-halved text-white text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">後台唱票系統</h2>
+                    <p class="text-slate-600 text-sm mb-4 leading-relaxed">
+                        現場唱票員專用：每唱一張票按一下 +1。<br>
+                        含候選人設定、票數重置、鎖定計票等管理功能。
+                    </p>
+                    <div class="flex items-center text-rose-600 font-semibold">
+                        前往後台登入
+                        <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                    <div class="mt-4 inline-block bg-amber-50 text-amber-700 text-xs font-medium px-3 py-1 rounded-full">
+                        <i class="fa-solid fa-lock mr-1"></i> 需教師帳號登入
+                    </div>
+                </a>
+            </div>
+
+            <!-- 提示 -->
+            <div class="mt-10 text-center text-white/80 text-sm bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-2xl mx-auto">
+                <i class="fa-solid fa-circle-info mr-2"></i>
+                請將「公開監票畫面」連結提供給各班觀看；「後台唱票系統」僅供唱票員使用。
+                兩個畫面為即時同步，後台每按一下，所有監票畫面立即更新。
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-6 text-white/80 text-sm">
+        <p>
+            Made with <span class="text-red-300">❤</span> by
+            <a href="https://www.smes.tyc.edu.tw/" target="_blank" rel="noopener" class="underline hover:text-white">阿凱老師</a>
+            &nbsp;|&nbsp; © <span id="year"></span> 石門國小
+        </p>
+    </footer>
+
+    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

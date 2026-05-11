@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>監票實況｜石門國小自治市市長選舉</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📺</text></svg>">
+    <style>
+        body { font-family: 'Noto Sans TC', system-ui, -apple-system, "Microsoft JhengHei", sans-serif; }
+        [x-cloak] { display: none !important; }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+            100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+        .live-dot { animation: pulse-ring 2s infinite; }
+        @keyframes flash {
+            0% { background-color: #fef3c7; }
+            100% { background-color: transparent; }
+        }
+        .flash { animation: flash 1.2s ease-out; }
+        .bar-fill { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .vote-num { transition: transform 0.3s; }
+        .num-bump { transform: scale(1.18); }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col" x-data="viewerApp()" x-init="init()" x-cloak>
+
+    <!-- 頂部標題列 -->
+    <header class="bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-lg sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-tv"></i>
+                    <span x-text="meta.title"></span>
+                </h1>
+                <p class="text-blue-100 text-sm mt-0.5" x-text="meta.subtitle"></p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- 即時連線狀態 -->
+                <div class="flex items-center gap-2 bg-white/15 backdrop-blur px-3 py-1.5 rounded-full text-sm">
+                    <span class="w-2.5 h-2.5 rounded-full live-dot"
+                          :class="connected ? 'bg-emerald-400' : 'bg-rose-400'"></span>
+                    <span x-text="connected ? '即時連線中' : '連線中斷'"></span>
+                </div>
+                <!-- 鎖定狀態 -->
+                <div x-show="meta.locked" class="bg-amber-500 text-white px-3 py-1.5 rounded-full text-sm font-medium">
+                    <i class="fa-solid fa-lock mr-1"></i> 計票已封存
+                </div>
+                <a href="index.html" class="text-white/80 hover:text-white text-sm hidden sm:inline">
+                    <i class="fa-solid fa-house mr-1"></i> 回主頁
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 py-6">
+
+        <!-- 載入錯誤提示 -->
+        <div x-show="loadError" class="bg-rose-50 border border-rose-200 text-rose-800 p-6 rounded-xl mb-6">
+            <h3 class="font-bold mb-2"><i class="fa-solid fa-triangle-exclamation mr-2"></i>無法連接到後端</h3>
+            <p class="text-sm" x-text="loadError"></p>
+        </div>
+
+        <!-- 統計列 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+                <div class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">總投票數</div>
+                <div class="text-3xl font-black text-slate-800 tabular-nums" x-text="totalVotes.toLocaleString()"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-emerald-500">
+                <div class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">候選人數</div>
+                <div class="text-3xl font-black text-slate-800 tabular-nums" x-text="candidates.length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-amber-500">
+                <div class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">目前最高票</div>
+                <div class="text-3xl font-black text-slate-800 tabular-nums" x-text="maxVotes.toLocaleString()"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-rose-500">
+                <div class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">最後更新</div>
+                <div class="text-base font-bold text-slate-800" x-text="lastUpdate || '—'"></div>
+            </div>
+        </div>
+
+        <!-- 候選人卡片網格 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <template x-for="(c, idx) in sortedCandidates" :key="c.id">
+                <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative"
+                     :class="{ 'ring-4 ring-yellow-400': idx === 0 && c.votes > 0 }"
+                     :id="'card-' + c.id">
+
+                    <!-- 排名標籤 -->
+                    <div class="absolute top-4 left-4 z-10 w-12 h-12 rounded-full flex flex-col items-center justify-center font-black text-white shadow-lg"
+                         :class="rankColor(idx, c.votes)">
+                        <span class="text-lg leading-none" x-text="rankLabel(idx, c.votes)"></span>
+                    </div>
+
+                    <!-- 候選人號碼 -->
+                    <div class="absolute top-4 right-4 z-10 bg-slate-800/80 backdrop-blur text-white px-3 py-1 rounded-full text-sm font-bold">
+                        <span x-text="`${c.id} 號`"></span>
+                    </div>
+
+                    <!-- 照片區 -->
+                    <div class="relative bg-gradient-to-b from-slate-100 to-slate-200 aspect-[3/4] overflow-hidden">
+                        <template x-if="c.imageUrl">
+                            <img :src="c.imageUrl" :alt="c.name"
+                                 class="w-full h-full object-cover"
+                                 @error="$el.style.display='none'">
+                        </template>
+                        <template x-if="!c.imageUrl">
+                            <div class="w-full h-full flex items-center justify-center">
+                                <i class="fa-solid fa-user text-slate-400 text-7xl"></i>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 姓名與票數 -->
+                    <div class="p-5 flex flex-col gap-3">
+                        <h3 class="text-2xl font-bold text-slate-800 text-center" x-text="c.name"></h3>
+
+                        <div class="text-center">
+                            <div class="text-xs text-slate-500 font-medium uppercase tracking-widest">目前得票</div>
+                            <div class="vote-num text-5xl font-black text-blue-600 tabular-nums leading-none mt-1"
+                                 :id="'num-' + c.id"
+                                 x-text="c.votes.toLocaleString()"></div>
+                            <div class="text-sm text-slate-500 mt-1">
+                                <span x-text="percentage(c.votes) + '%'"></span>
+                            </div>
+                        </div>
+
+                        <!-- 長條圖 -->
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full bar-fill"
+                                 :class="rankBarColor(idx, c.votes)"
+                                 :style="`width: ${maxVotes > 0 ? (c.votes / maxVotes) * 100 : 0}%`"></div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 py-5 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <p>
+                Made with <span class="text-red-400">❤</span> by
+                <a href="https://www.smes.tyc.edu.tw/" target="_blank" rel="noopener" class="text-slate-200 hover:text-white underline">阿凱老師</a>
+                &nbsp;|&nbsp; © <span id="year"></span> 石門國小
+            </p>
+        </div>
+    </footer>
+
+    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+        import { firebaseConfig, DEFAULT_CANDIDATES, DEFAULT_META } from "./firebase-config.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.viewerApp = function () {
+            return {
+                candidates: [],
+                meta: { ...DEFAULT_META },
+                connected: false,
+                loadError: null,
+                lastUpdate: '',
+                _prevVotes: {},
+
+                init() {
+                    // 監聽連線狀態
+                    onValue(ref(db, '.info/connected'), (snap) => {
+                        this.connected = snap.val() === true;
+                    });
+
+                    // 監聽候選人
+                    onValue(ref(db, 'election/candidates'), (snap) => {
+                        const v = snap.val();
+                        if (!v) {
+                            this.candidates = DEFAULT_CANDIDATES.map(c => ({ ...c }));
+                        } else {
+                            this.candidates = Object.values(v)
+                                .map(c => ({
+                                    id: Number(c.id),
+                                    name: c.name || '',
+                                    imageUrl: c.imageUrl || '',
+                                    votes: Number(c.votes) || 0
+                                }))
+                                .sort((a, b) => a.id - b.id);
+                        }
+                        this.flashChanged();
+                        this.lastUpdate = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+                    }, (err) => {
+                        this.loadError = err.message + '（請確認 firebase-config.js 已正確設定，且 Realtime Database Rules 已部署）';
+                    });
+
+                    // 監聽 meta
+                    onValue(ref(db, 'election/meta'), (snap) => {
+                        const v = snap.val();
+                        if (v) this.meta = { ...DEFAULT_META, ...v };
+                    });
+                },
+
+                flashChanged() {
+                    this.$nextTick(() => {
+                        for (const c of this.candidates) {
+                            const prev = this._prevVotes[c.id];
+                            if (prev !== undefined && prev !== c.votes) {
+                                const card = document.getElementById('card-' + c.id);
+                                const num = document.getElementById('num-' + c.id);
+                                if (card) {
+                                    card.classList.remove('flash');
+                                    void card.offsetWidth;
+                                    card.classList.add('flash');
+                                }
+                                if (num) {
+                                    num.classList.add('num-bump');
+                                    setTimeout(() => num.classList.remove('num-bump'), 300);
+                                }
+                            }
+                            this._prevVotes[c.id] = c.votes;
+                        }
+                    });
+                },
+
+                get totalVotes() {
+                    return this.candidates.reduce((s, c) => s + c.votes, 0);
+                },
+                get maxVotes() {
+                    return this.candidates.length ? Math.max(...this.candidates.map(c => c.votes)) : 0;
+                },
+                get sortedCandidates() {
+                    return [...this.candidates].sort((a, b) => {
+                        if (b.votes !== a.votes) return b.votes - a.votes;
+                        return a.id - b.id;
+                    });
+                },
+                percentage(v) {
+                    if (this.totalVotes === 0) return '0.0';
+                    return (v * 100 / this.totalVotes).toFixed(1);
+                },
+                rankLabel(idx, votes) {
+                    if (votes === 0) return '—';
+                    return ['🥇', '🥈', '🥉'][idx] || (idx + 1);
+                },
+                rankColor(idx, votes) {
+                    if (votes === 0) return 'bg-slate-400';
+                    return ['bg-yellow-500', 'bg-slate-400', 'bg-amber-700'][idx] || 'bg-slate-500';
+                },
+                rankBarColor(idx, votes) {
+                    if (votes === 0) return 'bg-slate-300';
+                    return ['bg-gradient-to-r from-yellow-400 to-yellow-500',
+                            'bg-gradient-to-r from-slate-400 to-slate-500',
+                            'bg-gradient-to-r from-amber-600 to-amber-700'][idx] || 'bg-gradient-to-r from-blue-400 to-blue-600';
+                }
+            };
+        };
+    </script>
+</body>
+</html>
