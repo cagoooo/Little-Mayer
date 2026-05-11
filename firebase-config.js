@@ -12,13 +12,13 @@
 // ============================================================
 
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDGKlW4LuMr_K9uzSvFnL7VVfLVfq-JzLE",
+  authDomain: "little-mayor-shimen-2036.firebaseapp.com",
+  databaseURL: "https://little-mayor-shimen-2036-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "little-mayor-shimen-2036",
+  storageBucket: "little-mayor-shimen-2036.firebasestorage.app",
+  messagingSenderId: "522821791839",
+  appId: "1:522821791839:web:c92bc35fa8f04b4ffa2bea"
 };
 
 // ============================================================
