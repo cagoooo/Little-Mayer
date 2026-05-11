@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 背景：藍色漸層圓角方形 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1e40af"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)"/>
+
+  <!-- 投票箱 -->
+  <rect x="14" y="26" width="36" height="28" rx="3" fill="#fff" stroke="#1e3a8a" stroke-width="1.5"/>
+  <!-- 投票箱開口 -->
+  <rect x="22" y="29" width="20" height="3" rx="1" fill="#1e3a8a"/>
+
+  <!-- 飛入的選票（從上方斜插入） -->
+  <g transform="rotate(-12 32 18)">
+    <rect x="22" y="10" width="20" height="14" rx="1.5" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+    <path d="M26 17 L30 21 L38 14" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- 皇冠（左上小裝飾，第一名的暗示） -->
+  <text x="6" y="18" font-size="14">👑</text>
+</svg>

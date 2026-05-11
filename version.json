@@ -1,5 +1,5 @@
 {
-  "version": "1.0.7",
-  "released": "2026-05-11T10:17:55+08:00",
-  "notes": "後台候選人照片改成方形大圖填滿卡片，消除留白"
+  "version": "1.0.8",
+  "released": "2026-05-11T10:24:37+08:00",
+  "notes": "加入 favicon (SVG/PNG) 與社群分享預覽圖 og-preview.png，含完整 og/twitter meta"
 }
