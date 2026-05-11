@@ -1,4 +1,4 @@
-# 一鍵升版腳本：自動更新所有 ?v= 版本字串、sw.js VERSION、version.json
+﻿# 一鍵升版腳本：自動更新所有 ?v= 版本字串、sw.js VERSION、version.json
 # 用法：
 #   .\bump-version.ps1                 # 自動 bump patch (1.0.0 -> 1.0.1)
 #   .\bump-version.ps1 -NewVersion 1.2.0
