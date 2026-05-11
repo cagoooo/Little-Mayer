@@ -1,5 +1,5 @@
 {
-  "version": "1.0.15",
-  "released": "2026-05-11T18:28:32+08:00",
-  "notes": "修正截圖中文變方框：等字型載入 + onclone 注入系統中文字型"
+  "version": "1.0.16",
+  "released": "2026-05-11T20:43:35+08:00",
+  "notes": "截圖修正：用 getBoundingClientRect 量實際尺寸，不隱藏按鈕避免空白"
 }

@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.15">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.15">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.15">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.16">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.16">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.16">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.15">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.16">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -856,16 +856,21 @@
                             await document.fonts.ready;
                         }
 
+                        // 取得實際元素尺寸（不要用 scrollWidth/Height，可能會大於 viewport）
+                        const rect = target.getBoundingClientRect();
+                        const w = Math.ceil(rect.width);
+                        const h = Math.ceil(rect.height);
+
                         const canvas = await html2canvas(target, {
                             backgroundColor: '#f1f5f9',
                             scale: 2,           // 兩倍解析
                             useCORS: true,
                             allowTaint: true,
                             logging: false,
-                            width: target.scrollWidth,
-                            height: target.scrollHeight,
-                            windowWidth: target.scrollWidth,
-                            windowHeight: target.scrollHeight,
+                            width: w,
+                            height: h,
+                            windowWidth: w,
+                            windowHeight: h,
                             // 在 cloned document 強制使用系統中文字型，避免 tofu
                             onclone: (clonedDoc) => {
                                 const style = clonedDoc.createElement('style');
@@ -881,9 +886,10 @@
                                     [class^="fa-"], [class*=" fa-"] {
                                         font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
                                     }
-                                    /* 截圖時隱藏按鈕區與 version tag，畫面更乾淨 */
-                                    .vote-btn { display: none !important; }
+                                    /* 隱藏 version tag */
                                     #lm-version-tag { display: none !important; }
+                                    /* 防止 hover transform 影響截圖 */
+                                    .card-elev:hover, .vote-btn:hover { transform: none !important; }
                                 `;
                                 clonedDoc.head.appendChild(style);
                             }
@@ -915,7 +921,7 @@
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script defer src="sound.js?v=1.0.15"></script>
-    <script defer src="version-check.js?v=1.0.15"></script>
+    <script defer src="sound.js?v=1.0.16"></script>
+    <script defer src="version-check.js?v=1.0.16"></script>
 </body>
 </html>

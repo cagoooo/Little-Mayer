@@ -2,7 +2,7 @@
 // 在每個頁面 <body> 結束前載入：<script defer src="version-check.js"></script>
 
 (function () {
-  const APP_VERSION = '1.0.15';   // ← 部署時由 bump-version 腳本更新
+  const APP_VERSION = '1.0.16';   // ← 部署時由 bump-version 腳本更新
   const CHECK_INTERVAL_MS = 60 * 1000;  // 每 60 秒查一次新版
 
   // ---------- 1. 註冊 Service Worker ----------

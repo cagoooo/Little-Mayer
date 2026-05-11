@@ -4,7 +4,7 @@
 //   - JS / CSS / 照片：cache-first（含版本字串自然失效）
 //   - Firebase / Google API / CDN：直通網路（不攔不快取）
 
-const VERSION = 'v1.0.15';                 // 部署時由 bump-version 腳本更新
+const VERSION = 'v1.0.16';                 // 部署時由 bump-version 腳本更新
 const STATIC_CACHE = `little-mayor-static-${VERSION}`;
 const HTML_CACHE   = `little-mayor-html-${VERSION}`;
 
