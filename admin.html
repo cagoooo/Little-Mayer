@@ -304,7 +304,7 @@
                     <p>
                         Made with <span class="text-red-400">❤</span> by
                         <a href="https://www.smes.tyc.edu.tw/" target="_blank" rel="noopener" class="text-slate-200 hover:text-white underline">阿凱老師</a>
-                        &nbsp;|&nbsp; © <span id="year"></span> 石門國小
+                        &nbsp;|&nbsp; © <span x-text="new Date().getFullYear()"></span> 石門國小
                     </p>
                 </div>
             </footer>
@@ -320,10 +320,8 @@
         </div>
     </div>
 
-    <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
-
-    <!-- Module 必須在 Alpine 之前載入並設定 window.adminApp，
-         否則 Alpine 自啟時找不到 adminApp 會整片噴錯 -->
+    <!-- Module 必須在 Alpine 之前載入並設定 window.adminApp。
+         不可用 top-level await，否則 module yield 時 Alpine 會先跑而找不到 adminApp。 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
         import {
@@ -338,7 +336,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
-        await setPersistence(auth, browserLocalPersistence);
+        // setPersistence 改成 fire-and-forget，避免 top-level await 阻塞 window.adminApp 註冊
+        setPersistence(auth, browserLocalPersistence).catch(e => console.warn('[Auth] setPersistence', e));
 
         window.adminApp = function () {
             return {
@@ -548,6 +547,6 @@
 
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.0"></script>
+    <script defer src="version-check.js?v=1.0.1"></script>
 </body>
 </html>
