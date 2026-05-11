@@ -1,5 +1,5 @@
 {
-  "version": "1.0.8",
-  "released": "2026-05-11T10:24:37+08:00",
-  "notes": "加入 favicon (SVG/PNG) 與社群分享預覽圖 og-preview.png，含完整 og/twitter meta"
+  "version": "1.0.9",
+  "released": "2026-05-11T10:40:42+08:00",
+  "notes": "監票畫面同票邏輯：dense ranking 同名次同徽章、並列領先 toast、卡片並列標籤"
 }

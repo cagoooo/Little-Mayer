@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.8">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.8">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.8">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.9">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.9">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.9">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.8">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.8">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.9">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.9">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.8">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.9">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -155,6 +155,11 @@
                 <div x-show="meta.locked" class="bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium">
                     <i class="fa-solid fa-lock mr-0.5"></i> 已封存
                 </div>
+                <!-- 並列領先指示 -->
+                <div x-show="leaderCandidates.length > 1" class="bg-gradient-to-r from-orange-500 to-rose-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow flex items-center gap-1">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span x-text="`${leaderCandidates.length} 人並列領先`"></span>
+                </div>
                 <a href="index.html" class="text-white/80 hover:text-white text-xs hidden sm:inline">
                     <i class="fa-solid fa-house mr-0.5"></i> 主頁
                 </a>
@@ -195,17 +200,24 @@
             <template x-for="(c, idx) in sortedCandidates" :key="c.id">
                 <div class="card-elev bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative"
                      :id="'card-' + c.id"
-                     :class="{ 'ring-4 ring-yellow-400 ring-offset-2': idx === 0 && c.votes > 0 }">
+                     :class="{ 'ring-4 ring-yellow-400 ring-offset-2': isLeader(c) }">
 
-                    <!-- 排名圈（左上）— 漸層大徽章，第一名加金光脈衝 -->
+                    <!-- 排名圈（左上）— 同票同名次（dense ranking） -->
                     <div class="absolute top-2 left-2 z-10 rounded-full flex items-center justify-center font-black shadow-xl ring-2 ring-white"
-                         :class="rankBadgeClass(idx, c.votes)">
-                        <span x-text="rankLabel(idx, c.votes)" :class="rankTextClass(idx, c.votes)"></span>
+                         :class="rankBadgeClass(c)">
+                        <span x-text="rankLabel(c)" :class="rankTextClass(c)"></span>
                     </div>
 
-                    <!-- 第一名皇冠（永遠閃爍） -->
-                    <div x-show="idx === 0 && c.votes > 0"
-                         class="absolute -top-2 left-1/2 -translate-x-1/2 z-20 text-2xl crown-shine">
+                    <!-- 並列標籤（同票 ≥2 人時顯示） -->
+                    <div x-show="rankTieCount(c) > 1 && c.votes > 0"
+                         class="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-gradient-to-r from-orange-500 to-rose-500 text-white px-2 py-0.5 rounded-md text-[10px] lg:text-xs font-bold shadow-md whitespace-nowrap">
+                        <i class="fa-solid fa-scale-balanced mr-0.5"></i>
+                        <span x-text="`並列${rankTieCount(c)}人`"></span>
+                    </div>
+
+                    <!-- 領先者皇冠（並列也都顯示） -->
+                    <div x-show="isLeader(c)"
+                         class="absolute -top-2 right-1/2 translate-x-[60%] z-20 text-2xl crown-shine">
                         👑
                     </div>
 
@@ -246,7 +258,7 @@
                         <!-- 進度條 -->
                         <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                             <div class="h-full rounded-full bar-fill"
-                                 :class="rankBarColor(idx, c.votes)"
+                                 :class="rankBarColor(c)"
                                  :style="`width: ${maxVotes > 0 ? (c.votes / maxVotes) * 100 : 0}%`"></div>
                         </div>
                     </div>
@@ -282,7 +294,7 @@
                 loadError: null,
                 lastUpdate: '',
                 _prevVotes: {},
-                _prevLeaderId: null,
+                _prevLeaderKey: '',
                 _firstLoad: true,
 
                 init() {
@@ -327,28 +339,20 @@
                             this._prevVotes[c.id] = c.votes;
                         }
 
-                        // 對每張變動的卡片做特效
                         if (!this._firstLoad) {
                             for (const ch of changedIds) {
                                 this.flashCard(ch.id, ch.delta);
                             }
                         }
 
-                        // 偵測領先變動
-                        const sorted = this.sortedCandidates;
-                        const newLeader = (sorted[0] && sorted[0].votes > 0) ? sorted[0] : null;
+                        // 偵測領先（並列也算）變動
+                        const leaders = this.leaderCandidates;
+                        const newKey = leaders.map(c => c.id).sort((a,b)=>a-b).join(',');
 
-                        if (!this._firstLoad && newLeader && this._prevLeaderId !== newLeader.id) {
-                            if (this._prevLeaderId !== null) {
-                                const old = this.candidates.find(c => c.id === this._prevLeaderId);
-                                this.fireLeaderChange(newLeader, old);
-                            }
-                            this._prevLeaderId = newLeader.id;
+                        if (!this._firstLoad && this._prevLeaderKey && newKey !== this._prevLeaderKey) {
+                            this.fireLeaderChange(this._prevLeaderKey, leaders);
                         }
-                        if (this._firstLoad && newLeader) {
-                            this._prevLeaderId = newLeader.id;
-                        }
-
+                        this._prevLeaderKey = newKey;
                         this._firstLoad = false;
                     });
                 },
@@ -375,22 +379,61 @@
                     }
                 },
 
-                fireLeaderChange(newLeader, oldLeader) {
+                fireLeaderChange(prevKey, newLeaders) {
+                    if (newLeaders.length === 0) return;
+
+                    const prevIds = prevKey ? prevKey.split(',').map(Number) : [];
+                    const newIds = newLeaders.map(c => c.id);
+
+                    // 判斷情境
+                    let icon, mainText, subText;
+                    const votes = newLeaders[0].votes;
+
+                    if (newLeaders.length === 1) {
+                        // 單人領先
+                        const leader = newLeaders[0];
+                        if (prevIds.length > 1) {
+                            icon = '👑';
+                            mainText = `${leader.id} 號 ${leader.name} 反超取得單獨領先！`;
+                        } else {
+                            icon = '👑';
+                            mainText = `${leader.id} 號 ${leader.name} 取得領先！`;
+                        }
+                        subText = `${votes} 票`;
+                    } else {
+                        // 多人並列
+                        icon = '⚖️';
+                        const names = newLeaders.map(c => `${c.id}號 ${c.name}`).join('、');
+                        mainText = `${newLeaders.length} 人並列領先`;
+                        subText = `${names}（各 ${votes} 票）`;
+                    }
+
                     const toast = document.createElement('div');
                     toast.className = 'leader-toast';
-                    toast.innerHTML = `<span class="emoji">👑</span> ${newLeader.id} 號 ${newLeader.name} 取得領先！`;
+                    toast.innerHTML = `
+                        <span class="emoji">${icon}</span>
+                        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
+                            <span>${mainText}</span>
+                            <span style="font-size:18px;font-weight:600;opacity:.9;">${subText}</span>
+                        </div>
+                    `;
                     document.body.appendChild(toast);
                     setTimeout(() => toast.remove(), 3100);
 
                     setTimeout(() => {
-                        const card = document.getElementById('card-' + newLeader.id);
-                        if (card) {
-                            card.classList.remove('leader-burst');
-                            void card.offsetWidth;
-                            card.classList.add('leader-burst');
+                        // 新領先者卡片金光爆炸
+                        for (const id of newIds) {
+                            const card = document.getElementById('card-' + id);
+                            if (card) {
+                                card.classList.remove('leader-burst');
+                                void card.offsetWidth;
+                                card.classList.add('leader-burst');
+                            }
                         }
-                        if (oldLeader) {
-                            const oldCard = document.getElementById('card-' + oldLeader.id);
+                        // 失去領先地位者震動
+                        for (const id of prevIds) {
+                            if (newIds.includes(id)) continue;
+                            const oldCard = document.getElementById('card-' + id);
                             if (oldCard) {
                                 oldCard.classList.remove('shake');
                                 void oldCard.offsetWidth;
@@ -407,48 +450,74 @@
                     return this.candidates.length ? Math.max(...this.candidates.map(c => c.votes)) : 0;
                 },
                 get sortedCandidates() {
+                    // 顯示順序：票數高→低，相同則 id 小→大（穩定排序）
                     return [...this.candidates].sort((a, b) => {
                         if (b.votes !== a.votes) return b.votes - a.votes;
                         return a.id - b.id;
                     });
                 },
+                // dense ranking：相同票數同名次。例：[23,23,20,12] → [1,1,2,3]
+                // 0 票回傳 null（不參與排名）
+                get rankMap() {
+                    const distinct = [...new Set(
+                        this.candidates.filter(c => c.votes > 0).map(c => c.votes)
+                    )].sort((a, b) => b - a);
+                    const map = {};
+                    for (const c of this.candidates) {
+                        map[c.id] = c.votes === 0 ? null : distinct.indexOf(c.votes) + 1;
+                    }
+                    return map;
+                },
+                // 各名次有幾人並列
+                get tieCountByRank() {
+                    const counts = {};
+                    for (const c of this.candidates) {
+                        const r = this.rankMap[c.id];
+                        if (r === null) continue;
+                        counts[r] = (counts[r] || 0) + 1;
+                    }
+                    return counts;
+                },
+                // 並列領先（rank == 1）的所有候選人
+                get leaderCandidates() {
+                    return this.candidates
+                        .filter(c => this.rankMap[c.id] === 1)
+                        .sort((a, b) => a.id - b.id);
+                },
+                rankOf(c)        { return this.rankMap[c.id]; },
+                rankTieCount(c)  { const r = this.rankMap[c.id]; return r ? this.tieCountByRank[r] : 0; },
+                isLeader(c)      { return this.rankMap[c.id] === 1; },
+
                 percentage(v) {
                     if (this.totalVotes === 0) return '0.0';
                     return (v * 100 / this.totalVotes).toFixed(1);
                 },
-                rankLabel(idx, votes) {
-                    if (votes === 0) return '—';
-                    return ['🥇', '🥈', '🥉'][idx] || (idx + 1);
+                rankLabel(c) {
+                    const r = this.rankOf(c);
+                    if (r === null) return '—';
+                    return ['🥇', '🥈', '🥉'][r - 1] || r;
                 },
-                // 圓徽章容器：尺寸 + 漸層 + 第一名脈衝動畫
-                rankBadgeClass(idx, votes) {
-                    if (votes === 0) {
-                        return 'w-12 h-12 lg:w-14 lg:h-14 bg-slate-400';
-                    }
-                    if (idx === 0) {
-                        return 'w-14 h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 rank-pulse';
-                    }
-                    if (idx === 1) {
-                        return 'w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400';
-                    }
-                    if (idx === 2) {
-                        return 'w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800';
-                    }
+                rankBadgeClass(c) {
+                    const r = this.rankOf(c);
+                    if (r === null) return 'w-12 h-12 lg:w-14 lg:h-14 bg-slate-400';
+                    if (r === 1)    return 'w-14 h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 rank-pulse';
+                    if (r === 2)    return 'w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400';
+                    if (r === 3)    return 'w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800';
                     return 'w-11 h-11 lg:w-12 lg:h-12 bg-gradient-to-br from-slate-500 to-slate-700';
                 },
-                // 字體：前三名 emoji 大字、其他名次數字
-                rankTextClass(idx, votes) {
-                    if (votes === 0) return 'text-xl lg:text-2xl text-white opacity-80';
-                    if (idx <= 2)    return 'text-2xl lg:text-3xl drop-shadow';
+                rankTextClass(c) {
+                    const r = this.rankOf(c);
+                    if (r === null) return 'text-xl lg:text-2xl text-white opacity-80';
+                    if (r <= 3)     return 'text-2xl lg:text-3xl drop-shadow';
                     return 'text-xl lg:text-2xl text-white';
                 },
-                rankBarColor(idx, votes) {
-                    if (votes === 0) return 'bg-slate-300';
-                    return [
-                        'bg-gradient-to-r from-yellow-400 to-yellow-500',
-                        'bg-gradient-to-r from-slate-400 to-slate-500',
-                        'bg-gradient-to-r from-amber-600 to-amber-700'
-                    ][idx] || 'bg-gradient-to-r from-blue-400 to-blue-600';
+                rankBarColor(c) {
+                    const r = this.rankOf(c);
+                    if (r === null) return 'bg-slate-300';
+                    if (r === 1) return 'bg-gradient-to-r from-yellow-400 to-yellow-500';
+                    if (r === 2) return 'bg-gradient-to-r from-slate-400 to-slate-500';
+                    if (r === 3) return 'bg-gradient-to-r from-amber-600 to-amber-700';
+                    return 'bg-gradient-to-r from-blue-400 to-blue-600';
                 }
             };
         };
@@ -456,6 +525,6 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.8"></script>
+    <script defer src="version-check.js?v=1.0.9"></script>
 </body>
 </html>
