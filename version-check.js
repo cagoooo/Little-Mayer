@@ -2,7 +2,7 @@
 // 在每個頁面 <body> 結束前載入：<script defer src="version-check.js"></script>
 
 (function () {
-  const APP_VERSION = '1.0.1';   // ← 部署時由 bump-version 腳本更新
+  const APP_VERSION = '1.0.2';   // ← 部署時由 bump-version 腳本更新
   const CHECK_INTERVAL_MS = 60 * 1000;  // 每 60 秒查一次新版
 
   // ---------- 1. 註冊 Service Worker ----------
@@ -42,10 +42,13 @@
       const r = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
       if (!r.ok) return;
       const data = await r.json();
+      console.log(`[Version] poll: local=${APP_VERSION}, remote=${data.version}`);
       if (data.version && data.version !== APP_VERSION) {
         showUpdateBanner('已發布新版 v' + data.version, data.notes || '');
       }
-    } catch (e) { /* 離線就略過 */ }
+    } catch (e) {
+      console.warn('[Version] poll failed', e);
+    }
   }
   setTimeout(pollVersion, 5000);
   setInterval(pollVersion, CHECK_INTERVAL_MS);
@@ -55,6 +58,7 @@
   function showUpdateBanner(title, notes) {
     if (bannerShown) return;
     bannerShown = true;
+    console.log('[Version] 顯示更新 banner:', title);
 
     const css = `
       .lm-update-banner {

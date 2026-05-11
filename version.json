@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
-  "released": "2026-05-11T01:50:00+08:00",
-  "notes": "修正 admin top-level await 競態與 #year null 錯誤"
+  "version": "1.0.2",
+  "released": "2026-05-11T09:57:30+08:00",
+  "notes": "驗證 SW 自動更新通知機制"
 }

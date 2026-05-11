@@ -33,12 +33,10 @@ Write-Host "  備註：    $Notes"
 Write-Host ""
 
 # ---------- 1. 更新 version.json ----------
-$newVerJson = [PSCustomObject]@{
-    version  = $NewVersion
-    released = (Get-Date -Format "yyyy-MM-ddTHH:mm:sszzz")
-    notes    = $Notes
-}
-$json = $newVerJson | ConvertTo-Json
+# 手動組 JSON 確保兩格縮排（ConvertTo-Json 在 PS 5.1 預設四格且兩個空格在 key 與 value 之間）
+$released = Get-Date -Format "yyyy-MM-ddTHH:mm:sszzz"
+$escNotes = $Notes -replace '\\','\\' -replace '"','\"'
+$json = "{`n  `"version`": `"$NewVersion`",`n  `"released`": `"$released`",`n  `"notes`": `"$escNotes`"`n}`n"
 [System.IO.File]::WriteAllText($verJsonPath, $json, [System.Text.UTF8Encoding]::new($false))
 Write-Host "✓ version.json 已更新" -ForegroundColor Green
 
