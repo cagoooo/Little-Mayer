@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.9">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.9">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.9">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.10">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.10">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.10">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.9">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.9">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.10">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.10">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.9">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.10">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -241,25 +241,34 @@
                         </template>
                     </div>
 
-                    <!-- 姓名 + 票數 -->
-                    <div class="p-2 lg:p-3 flex flex-col gap-1.5 flex-grow justify-between">
-                        <h3 class="text-base lg:text-lg font-bold text-slate-800 text-center truncate" x-text="c.name"></h3>
+                    <!-- 姓名 + 票數 + 得票率 -->
+                    <div class="p-3 lg:p-4 flex flex-col gap-3 lg:gap-4 flex-grow">
 
-                        <div class="text-center">
-                            <div class="text-[10px] text-slate-500 uppercase tracking-widest">得票</div>
-                            <div class="text-3xl lg:text-4xl xl:text-5xl font-black text-blue-600 tabular-nums leading-none"
+                        <!-- 姓名（大字） -->
+                        <h3 class="text-xl lg:text-2xl xl:text-3xl font-black text-slate-800 text-center truncate tracking-wide"
+                            x-text="c.name"></h3>
+
+                        <!-- 票數區塊（超大主視覺） -->
+                        <div class="text-center flex-grow flex flex-col justify-center">
+                            <div class="text-xs lg:text-sm text-slate-500 font-bold uppercase tracking-widest mb-1">得票</div>
+                            <div class="text-6xl lg:text-7xl xl:text-8xl font-black text-blue-600 tabular-nums leading-none"
                                  :id="'num-' + c.id"
                                  x-text="c.votes.toLocaleString()"></div>
-                            <div class="text-[10px] lg:text-xs text-slate-500 mt-0.5">
-                                <span x-text="percentage(c.votes) + '%'"></span>
-                            </div>
                         </div>
 
-                        <!-- 進度條 -->
-                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full bar-fill"
-                                 :class="rankBarColor(c)"
-                                 :style="`width: ${maxVotes > 0 ? (c.votes / maxVotes) * 100 : 0}%`"></div>
+                        <!-- 得票率徽章 + 進度條 -->
+                        <div class="space-y-2">
+                            <div class="flex items-baseline justify-center gap-1">
+                                <span class="text-2xl lg:text-3xl font-black tabular-nums"
+                                      :class="rankPercentTextColor(c)"
+                                      x-text="percentage(c.votes)"></span>
+                                <span class="text-base lg:text-lg font-bold text-slate-500">%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2.5 lg:h-3 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full bar-fill"
+                                     :class="rankBarColor(c)"
+                                     :style="`width: ${maxVotes > 0 ? (c.votes / maxVotes) * 100 : 0}%`"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -518,6 +527,14 @@
                     if (r === 2) return 'bg-gradient-to-r from-slate-400 to-slate-500';
                     if (r === 3) return 'bg-gradient-to-r from-amber-600 to-amber-700';
                     return 'bg-gradient-to-r from-blue-400 to-blue-600';
+                },
+                rankPercentTextColor(c) {
+                    const r = this.rankOf(c);
+                    if (r === null) return 'text-slate-400';
+                    if (r === 1) return 'text-amber-600';
+                    if (r === 2) return 'text-slate-600';
+                    if (r === 3) return 'text-amber-700';
+                    return 'text-blue-600';
                 }
             };
         };
@@ -525,6 +542,6 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.9"></script>
+    <script defer src="version-check.js?v=1.0.10"></script>
 </body>
 </html>
