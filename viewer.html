@@ -55,6 +55,13 @@
         }
         .crown-shine { animation: crown-shine 1.6s ease-in-out infinite; }
 
+        /* 第一名排名徽章常駐金光脈衝 */
+        @keyframes rank-pulse {
+            0%, 100% { box-shadow: 0 0 0 0   rgba(250,204,21,.6); }
+            50%      { box-shadow: 0 0 0 10px rgba(250,204,21,0); }
+        }
+        .rank-pulse { animation: rank-pulse 1.8s ease-in-out infinite; }
+
         /* 領先變動：新領先者大金光 */
         @keyframes leader-burst {
             0%   { transform: scale(1);    box-shadow: 0 0 0 0   rgba(250,204,21,0); }
@@ -162,10 +169,10 @@
                      :id="'card-' + c.id"
                      :class="{ 'ring-4 ring-yellow-400 ring-offset-2': idx === 0 && c.votes > 0 }">
 
-                    <!-- 排名圈（左上） -->
-                    <div class="absolute top-1.5 left-1.5 z-10 w-9 h-9 rounded-full flex items-center justify-center font-black text-white shadow-lg text-sm"
-                         :class="rankColor(idx, c.votes)">
-                        <span x-text="rankLabel(idx, c.votes)"></span>
+                    <!-- 排名圈（左上）— 漸層大徽章，第一名加金光脈衝 -->
+                    <div class="absolute top-2 left-2 z-10 rounded-full flex items-center justify-center font-black shadow-xl ring-2 ring-white"
+                         :class="rankBadgeClass(idx, c.votes)">
+                        <span x-text="rankLabel(idx, c.votes)" :class="rankTextClass(idx, c.votes)"></span>
                     </div>
 
                     <!-- 第一名皇冠（永遠閃爍） -->
@@ -385,9 +392,27 @@
                     if (votes === 0) return '—';
                     return ['🥇', '🥈', '🥉'][idx] || (idx + 1);
                 },
-                rankColor(idx, votes) {
-                    if (votes === 0) return 'bg-slate-400';
-                    return ['bg-yellow-500', 'bg-slate-400', 'bg-amber-700'][idx] || 'bg-slate-500';
+                // 圓徽章容器：尺寸 + 漸層 + 第一名脈衝動畫
+                rankBadgeClass(idx, votes) {
+                    if (votes === 0) {
+                        return 'w-12 h-12 lg:w-14 lg:h-14 bg-slate-400';
+                    }
+                    if (idx === 0) {
+                        return 'w-14 h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 rank-pulse';
+                    }
+                    if (idx === 1) {
+                        return 'w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400';
+                    }
+                    if (idx === 2) {
+                        return 'w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800';
+                    }
+                    return 'w-11 h-11 lg:w-12 lg:h-12 bg-gradient-to-br from-slate-500 to-slate-700';
+                },
+                // 字體：前三名 emoji 大字、其他名次數字
+                rankTextClass(idx, votes) {
+                    if (votes === 0) return 'text-xl lg:text-2xl text-white opacity-80';
+                    if (idx <= 2)    return 'text-2xl lg:text-3xl drop-shadow';
+                    return 'text-xl lg:text-2xl text-white';
                 },
                 rankBarColor(idx, votes) {
                     if (votes === 0) return 'bg-slate-300';
@@ -403,6 +428,6 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.5"></script>
+    <script defer src="version-check.js?v=1.0.6"></script>
 </body>
 </html>
