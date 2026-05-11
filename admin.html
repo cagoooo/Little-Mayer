@@ -10,14 +10,67 @@
     <style>
         body { font-family: 'Noto Sans TC', system-ui, -apple-system, "Microsoft JhengHei", sans-serif; }
         [x-cloak] { display: none !important; }
+
+        /* 按鈕互動 */
+        .vote-btn { transition: transform .12s, box-shadow .12s; }
         .vote-btn:active { transform: scale(0.93); }
-        .vote-btn { transition: all 0.1s; }
-        @keyframes bump {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.25); color: #16a34a; }
-            100% { transform: scale(1); }
+        .vote-btn-add:hover { box-shadow: 0 8px 20px rgba(37,99,235,.4); }
+
+        /* 票數數字跳動 + 變色 */
+        @keyframes num-pop {
+            0%   { transform: scale(1);    color: #1e293b; text-shadow: none; }
+            40%  { transform: scale(1.45); color: #16a34a; text-shadow: 0 4px 24px rgba(22,163,74,.5); }
+            100% { transform: scale(1);    color: #1e293b; text-shadow: none; }
         }
-        .num-bump { animation: bump 0.4s ease-out; }
+        .num-pop { animation: num-pop .55s cubic-bezier(.4,0,.2,1); }
+
+        /* 卡片光暈（+1 後） */
+        @keyframes card-flash {
+            0%   { box-shadow: 0 0 0 0   rgba(37,99,235,0); }
+            30%  { box-shadow: 0 0 0 12px rgba(37,99,235,.45); }
+            100% { box-shadow: 0 0 0 0   rgba(37,99,235,0); }
+        }
+        .card-flash { animation: card-flash .9s ease-out; }
+
+        /* 卡片 -1 用紅色 */
+        @keyframes card-flash-minus {
+            0%   { box-shadow: 0 0 0 0   rgba(239,68,68,0); }
+            30%  { box-shadow: 0 0 0 12px rgba(239,68,68,.45); }
+            100% { box-shadow: 0 0 0 0   rgba(239,68,68,0); }
+        }
+        .card-flash-minus { animation: card-flash-minus .9s ease-out; }
+
+        /* +1 飄字 */
+        @keyframes float-up {
+            0%   { transform: translate(-50%, 0)     scale(1);   opacity: 1; }
+            100% { transform: translate(-50%, -90px) scale(1.6); opacity: 0; }
+        }
+        .float-plus {
+            position: absolute; left: 50%; top: 50%;
+            color: #16a34a; font-size: 36px; font-weight: 900;
+            text-shadow: 0 2px 12px rgba(22,163,74,.5);
+            pointer-events: none; z-index: 30;
+            animation: float-up 1.1s cubic-bezier(.4,0,.2,1) forwards;
+        }
+        .float-minus {
+            position: absolute; left: 50%; top: 50%;
+            color: #ef4444; font-size: 32px; font-weight: 900;
+            text-shadow: 0 2px 12px rgba(239,68,68,.5);
+            pointer-events: none; z-index: 30;
+            animation: float-up 1.1s cubic-bezier(.4,0,.2,1) forwards;
+        }
+
+        /* 按鈕 ripple 點擊波紋 */
+        @keyframes ripple {
+            0%   { transform: scale(0);   opacity: 0.5; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .ripple {
+            position: absolute; border-radius: 50%;
+            background: rgba(255,255,255,.7);
+            pointer-events: none;
+            animation: ripple .6s ease-out forwards;
+        }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col" x-data="adminApp()" x-init="init()" x-cloak>
@@ -157,7 +210,8 @@
                     <!-- 候選人卡片 -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         <template x-for="c in sortedCandidates" :key="c.id">
-                            <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
+                            <div class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative"
+                                 :id="'admin-card-'+c.id">
 
                                 <!-- 卡頭：號碼 + 姓名 + 照片 -->
                                 <div class="relative bg-gradient-to-b from-slate-50 to-white p-4 border-b border-slate-100">
@@ -185,16 +239,16 @@
                                     </div>
 
                                     <div class="flex gap-2">
-                                        <button @click="changeVote(c.id, -1)"
+                                        <button @click="changeVote(c.id, -1, $event)"
                                                 :disabled="c.votes === 0 || meta.locked || busy"
-                                                class="vote-btn w-14 h-14 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xl shadow-sm"
+                                                class="vote-btn relative overflow-hidden w-14 h-14 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xl shadow-sm"
                                                 title="減少一票（修正）">
-                                            <i class="fa-solid fa-minus"></i>
+                                            <i class="fa-solid fa-minus pointer-events-none"></i>
                                         </button>
-                                        <button @click="changeVote(c.id, +1)"
+                                        <button @click="changeVote(c.id, +1, $event)"
                                                 :disabled="meta.locked || busy"
-                                                class="vote-btn flex-grow h-14 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-xl font-bold shadow-md flex items-center justify-center gap-2">
-                                            <i class="fa-solid fa-plus"></i> 加 1 票
+                                                class="vote-btn vote-btn-add relative overflow-hidden flex-grow h-14 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-xl font-bold shadow-md flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-plus pointer-events-none"></i><span class="pointer-events-none">加 1 票</span>
                                         </button>
                                     </div>
                                 </div>
@@ -431,21 +485,25 @@
                     return [...this.candidates].sort((a, b) => a.id - b.id);
                 },
 
-                async changeVote(id, delta) {
+                async changeVote(id, delta, event) {
                     if (this.meta.locked) return this.notify('計票已封存', 'error');
                     if (this.busy) return;
                     this.busy = true;
+
+                    // 立刻觸發按鈕特效，不等網路
+                    if (event) this.spawnRipple(event);
+                    this.spawnFloatLabel(id, delta);
+
                     try {
                         await runTransaction(ref(db, `election/candidates/${id}/votes`), (cur) => {
                             const n = (cur || 0) + delta;
                             return n < 0 ? 0 : n;
                         });
                         this.lastAction = { type: delta > 0 ? 'add' : 'sub', id, by: delta };
-                        // log
                         await push(ref(db, 'election/log'), {
                             ts: Date.now(), action: 'vote', id, delta, by: this.user.email
                         }).catch(() => {});
-                        this.bumpNum(id);
+                        this.bumpCard(id, delta);
                     } catch (e) {
                         this.notify('寫入失敗：' + e.message, 'error');
                     } finally {
@@ -461,13 +519,48 @@
                     this.notify('已復原上一次操作');
                 },
 
-                bumpNum(id) {
+                // 按鈕點擊處 spawn ripple
+                spawnRipple(event) {
+                    const btn = event.currentTarget;
+                    if (!btn) return;
+                    const rect = btn.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = event.clientX - rect.left - size / 2;
+                    const y = event.clientY - rect.top  - size / 2;
+                    const r = document.createElement('span');
+                    r.className = 'ripple';
+                    r.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px;`;
+                    btn.appendChild(r);
+                    setTimeout(() => r.remove(), 650);
+                },
+
+                // 卡片上飄出 +1 或 -1
+                spawnFloatLabel(id, delta) {
+                    const card = document.getElementById('admin-card-' + id);
+                    if (!card) return;
+                    const float = document.createElement('div');
+                    float.className = delta > 0 ? 'float-plus' : 'float-minus';
+                    float.textContent = (delta > 0 ? '+' : '') + delta;
+                    card.appendChild(float);
+                    setTimeout(() => float.remove(), 1150);
+                },
+
+                // 票數寫入成功後：數字跳動 + 卡片光暈
+                bumpCard(id, delta) {
                     this.$nextTick(() => {
-                        const el = document.getElementById('cnt-' + id);
-                        if (!el) return;
-                        el.classList.remove('num-bump');
-                        void el.offsetWidth;
-                        el.classList.add('num-bump');
+                        const num = document.getElementById('cnt-' + id);
+                        if (num) {
+                            num.classList.remove('num-pop');
+                            void num.offsetWidth;
+                            num.classList.add('num-pop');
+                        }
+                        const card = document.getElementById('admin-card-' + id);
+                        if (card) {
+                            const cls = delta > 0 ? 'card-flash' : 'card-flash-minus';
+                            card.classList.remove('card-flash', 'card-flash-minus');
+                            void card.offsetWidth;
+                            card.classList.add(cls);
+                        }
                     });
                 },
 
@@ -547,6 +640,6 @@
 
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="version-check.js?v=1.0.2"></script>
+    <script defer src="version-check.js?v=1.0.3"></script>
 </body>
 </html>
