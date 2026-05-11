@@ -86,6 +86,32 @@ git push -u origin main
 
 ---
 
+## 🔄 版本更新機制（避免使用者看到舊版）
+
+本系統有 Service Worker + 版本輪詢，**每次部署使用者會自動收到「立刻更新」提示**：
+
+- `sw.js`：HTML 用 network-first（永遠最新）、JS/CSS 用 cache-first（含版本字串自然失效）
+- `version-check.js`：每 60 秒查 `version.json`，發現版本變更就彈藍色 banner
+- 右下角永遠顯示目前版本號
+
+### 改完程式要部署時的流程
+
+```powershell
+# 1. 自動 bump 版本（patch）+ 同步寫入 sw.js / version-check.js / 各 HTML 的 ?v=
+.\bump-version.ps1
+# 或自訂版本號 / 備註：
+.\bump-version.ps1 -NewVersion 1.2.0 -Notes "新增匯出 CSV 功能"
+
+# 2. push
+git add -A
+git commit -m "🚀 v1.0.1 - bug fix"
+git push
+```
+
+GitHub Pages 重建後 1 分鐘內，現有使用者畫面會自動跳出「🚀 已發布新版」按鈕，按一下就立即更新。
+
+---
+
 ## 🛠️ 本機測試（不部署）
 
 打開 `index.html` 直接雙擊 → 瀏覽器 → 應該能看到入口。
