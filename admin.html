@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.21">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.21">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.21">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.22">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.22">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.22">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.21">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -222,6 +222,12 @@
                                     title="下載目前畫面截圖 PNG">
                                 <i class="fa-solid" :class="busyShot ? 'fa-circle-notch fa-spin' : 'fa-camera'"></i>
                                 <span x-text="busyShot ? '截圖中...' : '截圖存檔'"></span>
+                            </button>
+                            <button x-show="meta.locked"
+                                    @click="republishCelebration()"
+                                    class="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow"
+                                    title="再次發布開票公告（所有監票畫面會重播當選動畫）">
+                                <i class="fa-solid fa-trophy"></i> 重新公告
                             </button>
                             <button @click="undoLast()" :disabled="!lastAction || busy"
                                     class="bg-slate-200 hover:bg-slate-300 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
@@ -714,10 +720,21 @@
 
                 async toggleLock() {
                     const next = !this.meta.locked;
-                    if (next && !confirm('確定要封存計票嗎？封存後將無法繼續加票。')) return;
+                    if (next && !confirm('確定要封存計票嗎？封存後將無法繼續加票，並會自動發布開票公告畫面。')) return;
                     if (!next && !confirm('確定要解除封存嗎？解除後可再次修改票數。')) return;
-                    await update(ref(db, 'election/meta'), { locked: next });
-                    this.notify(next ? '已封存計票' : '已解除封存');
+                    const updates = { locked: next };
+                    if (next) {
+                        updates.celebrateAt = Date.now(); // 同步發布公告
+                    }
+                    await update(ref(db, 'election/meta'), updates);
+                    this.notify(next ? '✓ 已封存並發布開票公告' : '已解除封存');
+                },
+
+                // 手動重新公告當選結果（封存狀態下顯示按鈕）
+                async republishCelebration() {
+                    if (!confirm('重新發布開票公告？所有監票畫面會再次播放當選公告動畫。')) return;
+                    await update(ref(db, 'election/meta'), { celebrateAt: Date.now() });
+                    this.notify('✓ 已重新發布開票公告');
                 },
 
                 async resetVotes() {
@@ -733,6 +750,7 @@
                 },
 
                 async saveMeta() {
+                    // 用 update 不會覆蓋未列出的欄位（celebrateAt 等保留）
                     await update(ref(db, 'election/meta'), {
                         title: this.meta.title || '',
                         subtitle: this.meta.subtitle || '',
@@ -1028,7 +1046,7 @@
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script defer src="sound.js?v=1.0.21"></script>
-    <script defer src="version-check.js?v=1.0.21"></script>
+    <script defer src="sound.js?v=1.0.22"></script>
+    <script defer src="version-check.js?v=1.0.22"></script>
 </body>
 </html>

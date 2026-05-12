@@ -72,6 +72,28 @@
                 { freq: 698, duration: 0.20, type: 'sine', volume: 0.22, gap: 0.18 }
             ]);
         },
+        // 開票完成大禮炮 — 上升大三和弦 + 持續和弦轟鳴 ~2 秒
+        celebrate() {
+            if (muted) return;
+            // 第 1 拍：上升音階
+            sequence([
+                { freq: 523, duration: 0.12, type: 'triangle', volume: 0.30 },  // C5
+                { freq: 659, duration: 0.12, type: 'triangle', volume: 0.30 },  // E5
+                { freq: 784, duration: 0.12, type: 'triangle', volume: 0.30 },  // G5
+                { freq: 1046, duration: 0.20, type: 'triangle', volume: 0.35 }  // C6
+            ]);
+            // 第 2 拍：大和弦轟鳴（多 oscillator 同時）
+            setTimeout(() => {
+                tone({ freq: 523, duration: 1.4, type: 'triangle', volume: 0.20 }); // C5
+                tone({ freq: 659, duration: 1.4, type: 'triangle', volume: 0.20 }); // E5
+                tone({ freq: 784, duration: 1.4, type: 'triangle', volume: 0.20 }); // G5
+                tone({ freq: 1046, duration: 1.4, type: 'sine', volume: 0.18 });    // C6
+            }, 560);
+            // 第 3 拍：小尾音
+            setTimeout(() => {
+                tone({ freq: 1568, duration: 0.6, type: 'triangle', volume: 0.20 }); // G6
+            }, 1700);
+        },
         // 切換靜音
         toggle() {
             muted = !muted;

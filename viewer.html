@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.21">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.21">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.21">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.22">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.22">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.22">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.21">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.21">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.21">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -159,6 +159,55 @@
             50%      { opacity: .35; }
         }
         .live-blink-text { animation: live-blink 1.4s infinite; }
+
+        /* ============= 開票完成公告畫面 ============= */
+        @keyframes celebration-fade-in {
+            0%   { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .celebration-overlay { animation: celebration-fade-in .5s ease-out; }
+
+        @keyframes title-zoom-in {
+            0%   { transform: scale(0.5) translateY(-30px); opacity: 0; }
+            50%  { transform: scale(1.1) translateY(0);     opacity: 1; }
+            100% { transform: scale(1)   translateY(0);     opacity: 1; }
+        }
+        .celebration-title { animation: title-zoom-in .9s cubic-bezier(.4,0,.2,1) .2s both; }
+
+        @keyframes winner-card-rise {
+            0%   { transform: translateY(80px) scale(0.85); opacity: 0; }
+            100% { transform: translateY(0)    scale(1);    opacity: 1; }
+        }
+        .winner-card { animation: winner-card-rise .8s cubic-bezier(.4,0,.2,1) .7s both; }
+
+        /* 金光呼吸（當選人頭像周圍） */
+        @keyframes winner-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,.7), 0 24px 64px rgba(250,204,21,.4); }
+            50%      { box-shadow: 0 0 0 24px rgba(250,204,21,0), 0 32px 80px rgba(250,204,21,.6); }
+        }
+        .winner-photo { animation: winner-glow 2s ease-in-out infinite; }
+
+        /* 「🏆 當選」徽章彈跳 */
+        @keyframes badge-bounce {
+            0%, 100% { transform: rotate(-10deg) scale(1); }
+            50%      { transform: rotate(-10deg) scale(1.08); }
+        }
+        .winner-badge { animation: badge-bounce 1.5s ease-in-out infinite; }
+
+        /* 五彩 Confetti 從上方落下旋轉 */
+        @keyframes confetti-fall {
+            0%   { transform: translateY(-50px) rotate(0deg);    opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg);  opacity: .9; }
+        }
+        .confetti-piece {
+            position: fixed;
+            top: -20px;
+            width: 12px;
+            height: 18px;
+            pointer-events: none;
+            z-index: 10000;
+            animation: confetti-fall linear forwards;
+        }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col" x-data="viewerApp()" x-init="init()" x-cloak>
@@ -582,6 +631,99 @@
         </div>
     </div>
 
+    <!-- ============= 開票完成公告畫面（全螢幕慶祝） ============= -->
+    <div x-show="celebrationOpen"
+         class="celebration-overlay fixed inset-0 z-[9999] flex items-center justify-center p-4 lg:p-8"
+         style="background: radial-gradient(ellipse at center, rgba(15,23,42,.92) 0%, rgba(2,6,23,.98) 100%);"
+         @click.self="closeCelebration()"
+         @keydown.escape.window="closeCelebration()">
+
+        <!-- 右上關閉鈕 -->
+        <button @click="closeCelebration()"
+                class="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center text-xl backdrop-blur transition-colors z-10"
+                title="關閉 (Esc)">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="max-w-5xl w-full text-center">
+            <!-- 大標 -->
+            <div class="celebration-title">
+                <div class="inline-block bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 text-transparent bg-clip-text">
+                    <h1 class="text-5xl md:text-7xl lg:text-8xl font-black tracking-wider drop-shadow-lg leading-tight">
+                        🏆 開票完成
+                    </h1>
+                </div>
+                <p class="text-white/80 text-base md:text-xl lg:text-2xl font-medium mt-3 lg:mt-4 tracking-wide" x-text="meta.title"></p>
+                <div class="inline-block bg-white/10 backdrop-blur text-white/90 px-4 py-1 rounded-full text-xs lg:text-sm mt-2">
+                    <i class="fa-solid fa-square-poll-vertical mr-1"></i>
+                    總投票數
+                    <strong class="tabular-nums mx-1" x-text="totalVotes.toLocaleString()"></strong> 票
+                </div>
+            </div>
+
+            <!-- 當選人卡片區 -->
+            <div class="winner-card mt-6 lg:mt-10">
+                <!-- 並列當選提示 -->
+                <div x-show="celebrationWinners.length > 1"
+                     class="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-1.5 rounded-full text-sm lg:text-base font-bold shadow-xl mb-4">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span x-text="`${celebrationWinners.length} 人並列當選`"></span>
+                </div>
+
+                <!-- 當選人 grid（1 人居中，多人並排） -->
+                <div :class="celebrationWinners.length === 1
+                              ? 'flex justify-center'
+                              : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-' + Math.min(celebrationWinners.length, 4) + ' gap-4 lg:gap-6'">
+                    <template x-for="w in celebrationWinners" :key="w.id">
+                        <div class="bg-gradient-to-b from-yellow-50 via-amber-50 to-orange-50 rounded-3xl shadow-2xl p-5 lg:p-7 relative overflow-hidden"
+                             :class="celebrationWinners.length === 1 ? 'max-w-md w-full' : ''">
+                            <!-- 「🏆 當選」徽章 -->
+                            <div class="winner-badge absolute top-3 left-3 bg-gradient-to-br from-yellow-400 to-amber-600 text-white px-2.5 py-1 lg:px-3 lg:py-1.5 rounded-lg font-black text-xs lg:text-sm shadow-lg">
+                                🏆 當選
+                            </div>
+                            <!-- 號碼徽章 -->
+                            <div class="absolute top-3 right-3 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-2.5 py-1 rounded-lg shadow-lg ring-2 ring-white flex items-baseline gap-0.5">
+                                <span class="text-base lg:text-xl font-black leading-none tabular-nums" x-text="w.id"></span>
+                                <span class="text-[10px] font-bold opacity-90">號</span>
+                            </div>
+
+                            <!-- 頭像（金光呼吸） -->
+                            <div class="winner-photo w-32 h-32 lg:w-44 lg:h-44 mx-auto mt-6 rounded-full overflow-hidden bg-slate-200 ring-8 ring-white">
+                                <template x-if="w.imageUrl">
+                                    <img :src="w.imageUrl" :alt="w.name" class="w-full h-full object-cover">
+                                </template>
+                                <template x-if="!w.imageUrl">
+                                    <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-400 text-6xl"></i></div>
+                                </template>
+                            </div>
+
+                            <!-- 名字 + 票數 -->
+                            <h2 class="text-3xl lg:text-5xl font-black text-slate-800 mt-4 lg:mt-5 tracking-wider" x-text="w.name"></h2>
+                            <div class="mt-3 lg:mt-4 flex items-baseline justify-center gap-2 lg:gap-3">
+                                <span class="text-5xl lg:text-7xl font-black text-amber-600 tabular-nums leading-none" x-text="w.votes.toLocaleString()"></span>
+                                <span class="text-base lg:text-xl font-bold text-slate-600">票</span>
+                                <span class="text-xs lg:text-sm text-slate-500 ml-1 lg:ml-2" x-text="'(' + percentage(w.votes) + '%)'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 行動按鈕 -->
+            <div class="winner-card mt-6 lg:mt-8 flex flex-wrap items-center justify-center gap-3">
+                <button x-show="meta.liveVideoUrl"
+                        @click="closeCelebration(); openLiveModal()"
+                        class="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl font-bold text-sm lg:text-base shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-video"></i> 觀看開票直播
+                </button>
+                <button @click="closeCelebration()"
+                        class="bg-white/20 hover:bg-white/30 text-white backdrop-blur px-5 py-3 rounded-xl font-bold text-sm lg:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-xmark"></i> 關閉公告
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-slate-800 text-slate-400 py-2">
         <div class="max-w-[1600px] mx-auto px-4 text-center text-xs">
             Made with <span class="text-red-400">❤</span> by
@@ -614,10 +756,13 @@
                 modalCandidate: null,
                 noticeOpen: false,
                 liveOpen: false,
+                celebrationOpen: false,
+                celebrationWinners: [],
                 _prevVotes: {},
                 _prevLeaderKey: '',
                 _firstLoad: true,
                 _lastCountdownState: 'unknown',
+                _lastCelebrateAt: 0,
 
                 init() {
                     onValue(ref(db, '.info/connected'), (snap) => {
@@ -670,7 +815,10 @@
 
                     onValue(ref(db, 'election/meta'), (snap) => {
                         const v = snap.val();
-                        if (v) this.meta = { ...DEFAULT_META, ...v };
+                        if (v) {
+                            this.meta = { ...DEFAULT_META, ...v };
+                            this.maybeTriggerCelebration();
+                        }
                     });
                 },
 
@@ -981,7 +1129,70 @@
                 },
                 closeLiveModal() {
                     this.liveOpen = false;
-                    if (!this.modalCandidate && !this.noticeOpen) document.body.style.overflow = '';
+                    if (!this.modalCandidate && !this.noticeOpen && !this.celebrationOpen) document.body.style.overflow = '';
+                },
+
+                // 偵測 admin 觸發的公告事件（celebrateAt timestamp 變化）
+                maybeTriggerCelebration() {
+                    const ts = Number(this.meta.celebrateAt) || 0;
+                    if (!ts) { this._lastCelebrateAt = 0; return; }
+                    // 首次載入：只記錄 timestamp，不自動播放（避免進站就被打擾）
+                    if (this._lastCelebrateAt === 0 && this._firstLoad) {
+                        this._lastCelebrateAt = ts;
+                        return;
+                    }
+                    if (ts !== this._lastCelebrateAt) {
+                        this._lastCelebrateAt = ts;
+                        this.openCelebration();
+                    }
+                },
+                openCelebration() {
+                    // 取得當選人（rank === 1，可能多人並列）
+                    this.celebrationWinners = this.leaderCandidates.slice();
+                    if (this.celebrationWinners.length === 0) {
+                        // 0 票時不公告
+                        return;
+                    }
+                    this.celebrationOpen = true;
+                    document.body.style.overflow = 'hidden';
+
+                    // 連續 3 波 confetti（每 800ms 一波）
+                    this.launchConfetti();
+                    setTimeout(() => this.launchConfetti(), 800);
+                    setTimeout(() => this.launchConfetti(), 1600);
+
+                    // 鳴禮炮音
+                    if (window.lmSound) window.lmSound.celebrate();
+                },
+                closeCelebration() {
+                    this.celebrationOpen = false;
+                    if (!this.modalCandidate && !this.noticeOpen && !this.liveOpen) document.body.style.overflow = '';
+                },
+                launchConfetti() {
+                    const colors = ['#fbbf24', '#f97316', '#ef4444', '#ec4899', '#a855f7', '#3b82f6', '#10b981'];
+                    const COUNT = 60;
+                    for (let i = 0; i < COUNT; i++) {
+                        const el = document.createElement('div');
+                        el.className = 'confetti-piece';
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        const left = Math.random() * 100;
+                        const duration = 2.5 + Math.random() * 2.5;
+                        const delay = Math.random() * 0.6;
+                        const w = 8 + Math.random() * 10;
+                        const h = 12 + Math.random() * 14;
+                        el.style.cssText = `
+                            left: ${left}vw;
+                            width: ${w}px;
+                            height: ${h}px;
+                            background: ${color};
+                            border-radius: ${Math.random() > .5 ? '2px' : '50%'};
+                            animation-duration: ${duration}s;
+                            animation-delay: ${delay}s;
+                            transform-origin: center;
+                        `;
+                        document.body.appendChild(el);
+                        setTimeout(() => el.remove(), (duration + delay) * 1000 + 200);
+                    }
                 },
                 // 將 YouTube URL 轉成 embed 形式
                 ytEmbed(url) {
@@ -995,7 +1206,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="sound.js?v=1.0.21"></script>
-    <script defer src="version-check.js?v=1.0.21"></script>
+    <script defer src="sound.js?v=1.0.22"></script>
+    <script defer src="version-check.js?v=1.0.22"></script>
 </body>
 </html>

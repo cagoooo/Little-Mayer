@@ -1,5 +1,5 @@
 {
-  "version": "1.0.21",
-  "released": "2026-05-12T12:15:55+08:00",
-  "notes": "新增開票現場 YouTube 直播：viewer header 紅色 LIVE 按鈕 + 大型直播 modal"
+  "version": "1.0.22",
+  "released": "2026-05-12T14:00:17+08:00",
+  "notes": "開票完成公告畫面：全螢幕慶祝 + 五彩 confetti + 鳴禮炮音效"
 }
