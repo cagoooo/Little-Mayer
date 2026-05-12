@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.27">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.27">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.27">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.28">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.28">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.28">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.27">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.28">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -242,6 +242,16 @@
                                title="OBS 直播浮層連結（透明背景，給直播主用）">
                                 <i class="fa-solid fa-video"></i> OBS 浮層
                             </a>
+                            <a href="poster.html" target="_blank" rel="noopener"
+                               class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                               title="生成當選人 1080×1920 直式海報（IG/FB 限動分享用）">
+                                <i class="fa-solid fa-image"></i> 當選海報
+                            </a>
+                            <button @click="openTimeline()"
+                                    class="bg-violet-100 hover:bg-violet-200 text-violet-800 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                                    title="顯示開票時間軸（每分鐘各候選人累積票數曲線）">
+                                <i class="fa-solid fa-chart-line"></i> 時間軸
+                            </button>
                             <button x-show="meta.locked"
                                     @click="republishCelebration()"
                                     class="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow"
@@ -382,6 +392,43 @@
                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none">
                             <p class="text-xs text-slate-500 mt-1.5">
                                 填入後監票畫面右上角會出現紅色「🔴 LIVE 開票直播」按鈕，點擊嵌入直播畫面。
+                            </p>
+                        </div>
+
+                        <!-- 學校 LOGO -->
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                <i class="fa-solid fa-school text-emerald-600 mr-1"></i>
+                                學校 LOGO（選填，會顯示在 viewer / 海報頁首）
+                            </label>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <div class="flex-shrink-0 relative w-16 h-16 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                                    <template x-if="meta.schoolLogoUrl">
+                                        <img :src="meta.schoolLogoUrl" alt="LOGO" class="w-full h-full object-contain p-1">
+                                    </template>
+                                    <template x-if="!meta.schoolLogoUrl">
+                                        <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-school text-slate-400 text-2xl"></i></div>
+                                    </template>
+                                    <div x-show="uploadingLogo" class="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                        <i class="fa-solid fa-circle-notch fa-spin text-white text-xl"></i>
+                                    </div>
+                                </div>
+                                <label for="logo-upload"
+                                       class="cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5"
+                                       :class="{ 'opacity-60 pointer-events-none': uploadingLogo }">
+                                    <i class="fa-solid" :class="uploadingLogo ? 'fa-circle-notch fa-spin' : 'fa-cloud-arrow-up'"></i>
+                                    <span x-text="uploadingLogo ? '上傳中...' : '上傳 LOGO'"></span>
+                                </label>
+                                <input type="file" accept="image/*" class="hidden"
+                                       id="logo-upload" @change="uploadLogo($event)">
+                                <button x-show="meta.schoolLogoUrl"
+                                        @click="meta.schoolLogoUrl=''; saveMeta()"
+                                        class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-2 rounded-lg text-sm font-medium">
+                                    <i class="fa-solid fa-trash"></i> 移除
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1.5">
+                                建議用 PNG 透明背景，自動縮成 256px 寬以內。
                             </p>
                         </div>
                     </div>
@@ -529,6 +576,58 @@
         </div>
     </template>
 
+    <!-- ============= 開票時間軸 Modal ============= -->
+    <div x-show="timelineOpen"
+         x-transition.opacity
+         class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-3 lg:p-6"
+         @click.self="timelineOpen = false"
+         @keydown.escape.window="timelineOpen = false">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-y-auto" @click.stop>
+            <!-- 標題列 -->
+            <div class="relative bg-gradient-to-br from-violet-600 to-purple-700 text-white p-5 lg:p-6">
+                <button @click="timelineOpen = false"
+                        class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h2 class="text-xl lg:text-2xl font-black flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line"></i> 開票時間軸
+                </h2>
+                <p class="text-white/80 text-xs lg:text-sm mt-1">
+                    每位候選人累積票數隨時間變化（按分鐘聚合）。可看出黃金交叉、逆轉時刻等戲劇性事件。
+                </p>
+            </div>
+
+            <!-- 圖表區 -->
+            <div class="p-4 lg:p-6">
+                <div x-show="timelineLog.length === 0" class="text-center py-12 text-slate-400">
+                    <i class="fa-solid fa-chart-line text-5xl mb-3"></i>
+                    <p>還沒有投票紀錄</p>
+                    <p class="text-xs mt-1">開始唱票後此圖會自動填入資料</p>
+                </div>
+                <div x-show="timelineLog.length > 0">
+                    <div class="relative w-full" style="height: 400px;">
+                        <canvas id="timeline-chart"></canvas>
+                    </div>
+                    <div class="mt-3 text-xs text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span><i class="fa-solid fa-circle-info"></i> 共 <strong x-text="timelineLog.length"></strong> 筆紀錄</span>
+                        <span x-show="timelineLog.length > 0">
+                            開始於 <strong x-text="timelineFirstAt"></strong>
+                        </span>
+                        <span x-show="timelineLog.length > 0">
+                            結束於 <strong x-text="timelineLastAt"></strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl text-center">
+                <button @click="timelineOpen = false"
+                        class="bg-slate-700 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-medium text-sm">
+                    <i class="fa-solid fa-xmark mr-1"></i> 關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div x-show="toast.show" x-transition class="fixed bottom-6 right-6 z-50">
         <div :class="toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'"
@@ -577,6 +676,12 @@
                 muted: localStorage.getItem('lm_muted') === '1',
                 lastAction: null, // {type:'add'|'sub', id, by}
                 uploadingId: null, // 哪個候選人正在上傳照片
+                uploadingLogo: false,
+                timelineOpen: false,
+                timelineLog: [],
+                timelineFirstAt: '',
+                timelineLastAt: '',
+                _timelineChart: null,
                 viewerCount: 0,
                 adminCount: 0,
 
@@ -796,9 +901,67 @@
                         locked: !!this.meta.locked,
                         openAt: this.meta.openAt || '',
                         noticeVideoUrl: this.meta.noticeVideoUrl || '',
-                        liveVideoUrl: this.meta.liveVideoUrl || ''
+                        liveVideoUrl: this.meta.liveVideoUrl || '',
+                        schoolLogoUrl: this.meta.schoolLogoUrl || ''
                     });
                     this.notify('活動資訊已儲存');
+                },
+
+                // 上傳學校 LOGO（縮成 max 256px PNG → base64 → 寫 meta.schoolLogoUrl）
+                async uploadLogo(event) {
+                    const input = event.target;
+                    const file = input.files && input.files[0];
+                    input.value = '';
+                    if (!file) return;
+                    if (!file.type.startsWith('image/')) {
+                        return this.notify('請選擇圖片檔', 'error');
+                    }
+                    if (file.size > 10 * 1024 * 1024) {
+                        return this.notify('檔案過大（請選 < 10MB 圖片）', 'error');
+                    }
+                    this.uploadingLogo = true;
+                    try {
+                        // LOGO 用 PNG 保留透明背景（quality 參數對 PNG 無效，傳 1.0）
+                        let dataUrl = await this.resizeImagePng(file, 256);
+                        if (dataUrl.length > 400 * 1024) {
+                            dataUrl = await this.resizeImagePng(file, 192);
+                        }
+                        this.meta.schoolLogoUrl = dataUrl;
+                        await update(ref(db, 'election/meta'), { schoolLogoUrl: dataUrl });
+                        const sizeKb = Math.round(dataUrl.length / 1024);
+                        this.notify(`✓ LOGO 已更新（${sizeKb} KB）`);
+                    } catch (e) {
+                        this.notify('上傳失敗：' + e.message, 'error');
+                    } finally {
+                        this.uploadingLogo = false;
+                    }
+                },
+                resizeImagePng(file, maxDim) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onerror = () => reject(new Error('讀檔失敗'));
+                        reader.onload = () => {
+                            const img = new Image();
+                            img.onerror = () => reject(new Error('圖片解析失敗'));
+                            img.onload = () => {
+                                let { width, height } = img;
+                                if (width > height) {
+                                    if (width > maxDim) { height *= maxDim / width; width = maxDim; }
+                                } else {
+                                    if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+                                }
+                                const canvas = document.createElement('canvas');
+                                canvas.width = Math.round(width);
+                                canvas.height = Math.round(height);
+                                const ctx = canvas.getContext('2d');
+                                ctx.imageSmoothingQuality = 'high';
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve(canvas.toDataURL('image/png'));
+                            };
+                            img.src = reader.result;
+                        };
+                        reader.readAsDataURL(file);
+                    });
                 },
 
                 // 設定相對時間（從現在 +N 分鐘），轉成 datetime-local 字串
@@ -1077,6 +1240,122 @@
                     } finally {
                         this.busyShot = false;
                     }
+                },
+
+                // 開啟時間軸 modal：從 RTDB log 取資料 → 用 Chart.js 畫
+                async openTimeline() {
+                    this.timelineOpen = true;
+                    if (typeof Chart === 'undefined') {
+                        return this.notify('Chart.js 尚未載入，請稍後再試', 'error');
+                    }
+                    // 一次性抓 log（單向；real-time 不必要因為這是分析用）
+                    const { onValue, off } = await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js");
+                    const logRef = ref(db, 'election/log');
+                    onValue(logRef, (snap) => {
+                        const v = snap.val() || {};
+                        const arr = Object.values(v)
+                            .filter(e => e && e.action === 'vote' && Number.isFinite(Number(e.ts)))
+                            .map(e => ({ ts: Number(e.ts), id: Number(e.id), delta: Number(e.delta) || 0 }))
+                            .sort((a, b) => a.ts - b.ts);
+                        this.timelineLog = arr;
+
+                        if (arr.length > 0) {
+                            const f = new Date(arr[0].ts);
+                            const l = new Date(arr[arr.length - 1].ts);
+                            const fmt = d => {
+                                const p = n => String(n).padStart(2, '0');
+                                return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+                            };
+                            this.timelineFirstAt = fmt(f);
+                            this.timelineLastAt = fmt(l);
+                        }
+
+                        this.$nextTick(() => this.renderTimeline());
+                    }, { onlyOnce: true });
+                },
+
+                renderTimeline() {
+                    if (this.timelineLog.length === 0) return;
+                    const canvas = document.getElementById('timeline-chart');
+                    if (!canvas) return;
+
+                    // 1. 計算時間軸 bin（每分鐘一格，或視範圍動態切）
+                    const startMs = this.timelineLog[0].ts;
+                    const endMs = this.timelineLog[this.timelineLog.length - 1].ts;
+                    const rangeMs = endMs - startMs;
+                    // 動態 bin：< 5 分 → 10 秒；< 30 分 → 30 秒；其他 → 1 分鐘
+                    const binMs = rangeMs < 5 * 60 * 1000 ? 10 * 1000
+                                : rangeMs < 30 * 60 * 1000 ? 30 * 1000
+                                : 60 * 1000;
+                    const startBin = Math.floor(startMs / binMs) * binMs;
+                    const endBin   = Math.floor(endMs   / binMs) * binMs;
+                    const labels = [];
+                    for (let t = startBin; t <= endBin; t += binMs) labels.push(t);
+
+                    // 2. 對每位候選人計算累積票數
+                    const colors = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
+                    const sortedCs = [...this.candidates].sort((a, b) => a.id - b.id);
+                    const datasets = sortedCs.map((c, idx) => {
+                        // 對每個 bin，累積到 binEnd 為止這位候選人的票數
+                        let cum = 0;
+                        let liIdx = 0;
+                        const data = labels.map(binStart => {
+                            const binEnd = binStart + binMs;
+                            while (liIdx < this.timelineLog.length && this.timelineLog[liIdx].ts < binEnd) {
+                                if (this.timelineLog[liIdx].id === c.id) {
+                                    cum += this.timelineLog[liIdx].delta;
+                                }
+                                liIdx++;
+                            }
+                            return cum;
+                        });
+                        return {
+                            label: `${c.id}號 ${c.name}`,
+                            data,
+                            borderColor: colors[idx % colors.length],
+                            backgroundColor: colors[idx % colors.length] + '20',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        };
+                    });
+
+                    // 銷毀舊圖表（重複開啟時）
+                    if (this._timelineChart) {
+                        this._timelineChart.destroy();
+                    }
+
+                    this._timelineChart = new Chart(canvas, {
+                        type: 'line',
+                        data: {
+                            labels: labels.map(t => {
+                                const d = new Date(t);
+                                const p = n => String(n).padStart(2, '0');
+                                return rangeMs < 5 * 60 * 1000
+                                    ? `${p(d.getMinutes())}:${p(d.getSeconds())}`
+                                    : `${p(d.getHours())}:${p(d.getMinutes())}`;
+                            }),
+                            datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { position: 'top', labels: { font: { size: 12 } } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y} 票`
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { title: { display: true, text: '時間' } },
+                                y: { title: { display: true, text: '累積票數' }, beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                            }
+                        }
+                    });
                 }
             };
         };
@@ -1085,7 +1364,8 @@
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script defer src="sound.js?v=1.0.27"></script>
-    <script defer src="version-check.js?v=1.0.27"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script defer src="sound.js?v=1.0.28"></script>
+    <script defer src="version-check.js?v=1.0.28"></script>
 </body>
 </html>

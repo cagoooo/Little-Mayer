@@ -70,5 +70,6 @@ export const DEFAULT_META = {
   locked: false, // true 時 admin 也無法再加票
   openAt: "",    // datetime-local 格式 "2026-05-11T14:30"；空字串 = 立即開放
   noticeVideoUrl: "https://youtu.be/DR3DSUI8cI0",        // 選舉注意事項影片
-  liveVideoUrl: "https://www.youtube.com/live/ZIRZ0Qk0B7A" // 開票現場 YouTube 直播
+  liveVideoUrl: "https://www.youtube.com/live/ZIRZ0Qk0B7A", // 開票現場 YouTube 直播
+  schoolLogoUrl: ""                                       // 學校 LOGO（base64 dataURL；空字串時用預設 icon）
 };

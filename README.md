@@ -2,15 +2,55 @@
 
 即時計票 + 即時監票的雙端系統，部署在 GitHub Pages，後端用 Firebase Realtime Database 同步資料、Firebase Auth 保護後台寫入。
 
-## 📐 三個畫面
+## 📐 五個畫面
 
 | 頁面 | 用途 | 權限 |
 |---|---|---|
 | `index.html` | 入口分流 | 公開 |
-| `viewer.html` | 公開監票（全班觀看，唯讀，即時同步） | 公開 |
-| `admin.html` | 後台唱票 / 候選人設定 | 教師帳號登入後可寫 |
+| `viewer.html` | 公開監票（全班觀看、即時同步、含當選公告動畫） | 公開 |
+| `admin.html` | 後台唱票 / 候選人設定 / 列印報告 / 時間軸 | 教師帳號登入後可寫 |
+| `report.html` | A4 直式開票結果報告（可列印 / 存 PDF） | 公開 |
+| `overlay.html` | OBS 直播浮層（透明背景，給直播主用） | 公開 |
+| `poster.html` | 1080×1920 當選海報（社群分享用） | 公開 |
 
 **安全原則**：viewer 連結即使被學生拿到也只能看；admin 必須以管理員 email/密碼登入才能改票數，連結被拿到也無法亂動。
+
+---
+
+## 🪟 嵌入學校官網（給校網管理員）
+
+把以下程式碼貼進學校網站任何頁面，5 分鐘就能上線：
+
+### 監票即時票數（最常用）
+```html
+<iframe src="https://cagoooo.github.io/Little-Mayer/viewer.html"
+        width="100%" height="900"
+        frameborder="0" allow="autoplay; fullscreen"
+        style="border:0; border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.1);">
+</iframe>
+```
+
+### 開票結果報告（封存後）
+```html
+<iframe src="https://cagoooo.github.io/Little-Mayer/report.html"
+        width="100%" height="1200"
+        frameborder="0"
+        style="border:0; border-radius:12px;">
+</iframe>
+```
+
+### OBS 直播浮層（給直播主，三種 layout 擇一）
+- 上排金銀銅：`https://cagoooo.github.io/Little-Mayer/overlay.html?layout=top3`
+- 橫條 6 人：`https://cagoooo.github.io/Little-Mayer/overlay.html?layout=bar`
+- 全部 6 卡：`https://cagoooo.github.io/Little-Mayer/overlay.html?layout=full`
+
+OBS Studio → 場景 → 新增「瀏覽器」來源 → 貼 URL → 寬高設 800×200（top3）或 1280×80（bar），勾選「透明背景」即可疊在直播畫面上。
+
+### 當選海報（社群分享用）
+```
+https://cagoooo.github.io/Little-Mayer/poster.html
+```
+進去後按「下載 1080×1920 海報」存圖，直接丟 IG/FB 限動。
 
 ---
 

@@ -55,7 +55,7 @@ $vcContent = [regex]::Replace($vcContent, "const APP_VERSION = '[^']+';", "const
 Write-Host "✓ version-check.js APP_VERSION 已更新" -ForegroundColor Green
 
 # ---------- 4. 更新所有 HTML 的 ?v= 版本字串 ----------
-$htmlFiles = @("index.html", "viewer.html", "admin.html", "report.html", "overlay.html")
+$htmlFiles = @("index.html", "viewer.html", "admin.html", "report.html", "overlay.html", "poster.html")
 foreach ($f in $htmlFiles) {
     $p = Join-Path $root $f
     if (-not (Test-Path $p)) { continue }

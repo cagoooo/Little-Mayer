@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>當選海報生成器｜石門國小自治市市長選舉</title>
+    <meta name="robots" content="noindex">
+
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.28">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif; background: #1e293b; color: #fff; }
+        [x-cloak] { display: none !important; }
+
+        /* 海報用 1080x1920 直式（IG 限動 / FB 限動標準） */
+        .poster-canvas {
+            width: 540px;       /* 螢幕預覽用 0.5x，html2canvas 再用 scale 2 出 1080 */
+            height: 960px;      /* 同上 */
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(160deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+            color: #fff;
+            font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+        }
+        /* 對應實際輸出尺寸 1080x1920，預覽是 0.5x */
+        .p-inner { padding: 28px; }
+
+        /* 金色閃光（裝飾） */
+        .deco-circle-1 { position:absolute; top:-80px; right:-80px; width:280px; height:280px; border-radius:50%; background:rgba(250,204,21,.18); filter: blur(40px); }
+        .deco-circle-2 { position:absolute; bottom:-100px; left:-80px; width:300px; height:300px; border-radius:50%; background:rgba(236,72,153,.25); filter: blur(50px); }
+    </style>
+</head>
+<body class="min-h-screen p-4 lg:p-8" x-data="posterApp()" x-init="init()" x-cloak>
+
+    <!-- 工具列 -->
+    <div class="max-w-3xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-image text-xl text-amber-400"></i>
+            <h1 class="text-lg font-bold">當選海報產生器</h1>
+            <span class="text-xs text-slate-400">1080 × 1920（IG / FB 限動標準）</span>
+        </div>
+        <div class="flex gap-2">
+            <button @click="cycleWinner()" x-show="winners.length > 1"
+                    class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                <i class="fa-solid fa-arrows-rotate"></i> 切換當選人 (<span x-text="currentIdx + 1"></span>/<span x-text="winners.length"></span>)
+            </button>
+            <button @click="download()" :disabled="busy || !current"
+                    class="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-600 text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                <i class="fa-solid" :class="busy ? 'fa-circle-notch fa-spin' : 'fa-download'"></i>
+                <span x-text="busy ? '生成中...' : '下載 1080×1920 海報'"></span>
+            </button>
+            <a href="admin.html" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fa-solid fa-arrow-left"></i> 回後台
+            </a>
+        </div>
+    </div>
+
+    <!-- 預覽（縮小到 540×960，但實際輸出 2x = 1080×1920） -->
+    <div class="flex justify-center">
+        <template x-if="!current">
+            <div class="bg-slate-700/50 rounded-xl p-12 text-center text-slate-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
+                <p>載入候選人資料中...</p>
+                <p class="text-xs mt-2">若一直停留此畫面，可能尚未封存計票 / 沒有當選人</p>
+            </div>
+        </template>
+        <template x-if="current">
+            <div id="poster-canvas" class="poster-canvas rounded-2xl shadow-2xl">
+                <div class="deco-circle-1"></div>
+                <div class="deco-circle-2"></div>
+
+                <div class="p-inner relative h-full flex flex-col">
+                    <!-- 頂部：學校 LOGO + 標題 -->
+                    <div class="flex items-center gap-3 mb-4">
+                        <template x-if="meta.schoolLogoUrl">
+                            <img :src="meta.schoolLogoUrl" alt="LOGO" class="w-12 h-12 object-contain bg-white/15 rounded-lg p-1">
+                        </template>
+                        <template x-if="!meta.schoolLogoUrl">
+                            <div class="w-12 h-12 bg-white/15 rounded-lg flex items-center justify-center text-2xl">🏫</div>
+                        </template>
+                        <div class="flex-grow leading-tight">
+                            <div class="text-[10px] tracking-widest opacity-80">桃園市石門國小</div>
+                            <div class="text-sm font-bold" x-text="meta.title || '自治市市長選舉'"></div>
+                        </div>
+                    </div>
+
+                    <!-- 大標 -->
+                    <div class="text-center mt-2">
+                        <div class="inline-block bg-amber-400 text-amber-900 px-3 py-1 rounded-full text-xs font-black tracking-widest mb-2">
+                            🏆 開 票 結 果
+                        </div>
+                        <h2 class="text-4xl font-black tracking-wider drop-shadow-lg leading-tight">
+                            當選人公告
+                        </h2>
+                    </div>
+
+                    <!-- 並列當選提示 -->
+                    <div x-show="winners.length > 1" class="text-center mt-2">
+                        <span class="inline-block bg-orange-500 text-white px-3 py-0.5 rounded-full text-[10px] font-bold">
+                            <i class="fa-solid fa-scale-balanced mr-0.5"></i>
+                            <span x-text="`${winners.length} 人並列當選 (顯示第 ${currentIdx+1} 位)`"></span>
+                        </span>
+                    </div>
+
+                    <!-- 候選人卡 -->
+                    <div class="mt-4 bg-white rounded-2xl p-4 text-slate-800 relative shadow-2xl">
+                        <!-- 號碼徽章 -->
+                        <div class="absolute -top-3 -right-3 bg-gradient-to-br from-blue-500 to-blue-700 text-white px-3 py-1.5 rounded-xl shadow-lg ring-2 ring-white flex items-baseline gap-0.5">
+                            <span class="text-xl font-black tabular-nums" x-text="current && current.id"></span>
+                            <span class="text-[9px] font-bold opacity-90">號</span>
+                        </div>
+
+                        <!-- 大頭像 -->
+                        <div class="w-48 h-48 mx-auto rounded-2xl overflow-hidden bg-slate-100 ring-4 ring-amber-400 shadow-xl">
+                            <template x-if="current && current.imageUrl">
+                                <img :src="current.imageUrl" :alt="current && current.name" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="!(current && current.imageUrl)">
+                                <div class="w-full h-full flex items-center justify-center"><i class="fa-solid fa-user text-slate-300 text-6xl"></i></div>
+                            </template>
+                        </div>
+
+                        <!-- 名字 + 票數 -->
+                        <h3 class="text-3xl font-black text-center mt-3 tracking-wider" x-text="current && current.name"></h3>
+                        <div class="text-center mt-2 flex items-baseline justify-center gap-1.5">
+                            <span class="text-5xl font-black text-amber-600 tabular-nums leading-none" x-text="current && current.votes.toLocaleString()"></span>
+                            <span class="text-base font-bold text-slate-600">票</span>
+                            <span class="text-xs text-slate-500 ml-1" x-text="'(' + percentage(current && current.votes || 0) + '%)'"></span>
+                        </div>
+                    </div>
+
+                    <!-- 政見承諾 -->
+                    <div class="mt-4 flex-grow" x-show="current && current.policies">
+                        <div class="text-center text-xs font-black tracking-widest mb-1.5 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-bullhorn text-amber-300"></i>
+                            當 選 承 諾
+                            <i class="fa-solid fa-bullhorn text-amber-300"></i>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur rounded-xl p-3 border border-white/30">
+                            <ul class="space-y-1.5 text-[11px] leading-relaxed">
+                                <template x-for="line in (current && current.policies ? current.policies.split('\n').filter(s => s.trim()) : [])" :key="line">
+                                    <li class="flex items-start gap-1.5">
+                                        <i class="fa-solid fa-star text-amber-300 mt-0.5 text-[9px] flex-shrink-0"></i>
+                                        <span x-text="line" class="break-words"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 底部：URL + 總票數 -->
+                    <div class="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-[10px]">
+                        <div class="flex items-center gap-1">
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                            總投票數 <strong class="tabular-nums" x-text="totalVotes.toLocaleString()"></strong> 票
+                        </div>
+                        <div class="opacity-80">cagoooo.github.io/Little-Mayer</div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- 提示 -->
+    <p class="text-center text-xs text-slate-400 mt-4">
+        提示：上方預覽為 0.5x 縮放，實際下載 PNG 是 <strong>1080×1920</strong>，可直接上傳 IG/FB 限動。
+    </p>
+
+    <!-- Module 必須在 Alpine 之前 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+        import { firebaseConfig, DEFAULT_CANDIDATES, DEFAULT_META } from "./firebase-config.js";
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.posterApp = function () {
+            return {
+                candidates: [],
+                meta: { ...DEFAULT_META },
+                currentIdx: 0,
+                busy: false,
+
+                init() {
+                    onValue(ref(db, 'election/candidates'), (snap) => {
+                        const v = snap.val();
+                        if (!v) {
+                            this.candidates = DEFAULT_CANDIDATES.map(c => ({ ...c }));
+                        } else {
+                            this.candidates = Object.values(v).map(c => ({
+                                id: Number(c.id),
+                                name: c.name || '',
+                                imageUrl: c.imageUrl || '',
+                                votes: Number(c.votes) || 0,
+                                bio: c.bio || '',
+                                policies: c.policies || ''
+                            })).sort((a, b) => a.id - b.id);
+                        }
+                    });
+                    onValue(ref(db, 'election/meta'), (snap) => {
+                        const v = snap.val();
+                        if (v) this.meta = { ...DEFAULT_META, ...v };
+                    });
+                },
+
+                get totalVotes() { return this.candidates.reduce((s, c) => s + c.votes, 0); },
+                get winners() {
+                    // dense ranking: rank 1 的所有候選人
+                    const distinct = [...new Set(
+                        this.candidates.filter(c => c.votes > 0).map(c => c.votes)
+                    )].sort((a, b) => b - a);
+                    if (distinct.length === 0) {
+                        // 沒投票時：顯示 1 號（讓使用者預覽版型）
+                        return this.candidates.slice(0, 1);
+                    }
+                    const topVotes = distinct[0];
+                    return this.candidates.filter(c => c.votes === topVotes);
+                },
+                get current() { return this.winners[this.currentIdx] || null; },
+                cycleWinner() {
+                    this.currentIdx = (this.currentIdx + 1) % this.winners.length;
+                },
+                percentage(v) {
+                    if (this.totalVotes === 0) return '0.0';
+                    return (v * 100 / this.totalVotes).toFixed(1);
+                },
+
+                async download() {
+                    if (typeof html2canvas !== 'function') return alert('截圖工具尚未載入');
+                    if (!this.current) return;
+                    this.busy = true;
+                    try {
+                        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                        const target = document.getElementById('poster-canvas');
+                        const canvas = await html2canvas(target, {
+                            backgroundColor: null,
+                            scale: 2,           // 540×960 × 2 = 1080×1920
+                            useCORS: true,
+                            allowTaint: true,
+                            logging: false,
+                            onclone: (clonedDoc) => {
+                                const style = clonedDoc.createElement('style');
+                                style.textContent = `
+                                    * { font-family: "Microsoft JhengHei","PingFang TC","Heiti TC","Noto Sans TC",system-ui,sans-serif !important; }
+                                    .fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands,
+                                    [class^="fa-"], [class*=" fa-"] {
+                                        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+                                    }
+                                `;
+                                clonedDoc.head.appendChild(style);
+                            }
+                        });
+                        const ts = new Date();
+                        const pad = n => String(n).padStart(2, '0');
+                        const fname = `當選海報_${this.current.id}號_${this.current.name}_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}.png`;
+                        canvas.toBlob((blob) => {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url; a.download = fname;
+                            document.body.appendChild(a); a.click(); a.remove();
+                            URL.revokeObjectURL(url);
+                        }, 'image/png');
+                    } catch (e) {
+                        alert('生成失敗：' + e.message);
+                    } finally {
+                        this.busy = false;
+                    }
+                }
+            };
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script defer src="version-check.js?v=1.0.28"></script>
+</body>
+</html>
