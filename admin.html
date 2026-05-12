@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.18">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.18">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.18">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.19">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.19">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.19">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.18">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.19">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -388,6 +388,24 @@
                                         <input type="text" x-model="c.imageUrl" placeholder="照片網址 / 路徑（或上傳後自動填入）"
                                                class="px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none md:col-span-1 truncate"
                                                title="上傳後此欄位會變成 data:image/jpeg;base64,...">
+
+                                        <!-- 經歷與政見編輯（橫跨 3 欄） -->
+                                        <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-[10px] text-slate-500 font-medium mb-0.5">
+                                                    <i class="fa-solid fa-medal text-amber-500 mr-0.5"></i>個人經歷（每行一項）
+                                                </label>
+                                                <textarea x-model="c.bio" rows="3" placeholder="1. 班長&#10;2. 模範生&#10;..."
+                                                          class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-700 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none resize-y"></textarea>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] text-slate-500 font-medium mb-0.5">
+                                                    <i class="fa-solid fa-bullhorn text-rose-500 mr-0.5"></i>政見內容（每行一項）
+                                                </label>
+                                                <textarea x-model="c.policies" rows="3" placeholder="一、xxx&#10;二、yyy&#10;..."
+                                                          class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-700 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none resize-y"></textarea>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- 隱藏的 file input（由上面兩個 label for 觸發） -->
@@ -551,7 +569,9 @@
                             id: Number(c.id),
                             name: c.name || '',
                             imageUrl: c.imageUrl || '',
-                            votes: Number(c.votes) || 0
+                            votes: Number(c.votes) || 0,
+                            bio: c.bio || '',
+                            policies: c.policies || ''
                         })).sort((a, b) => a.id - b.id);
                     });
 
@@ -697,7 +717,9 @@
                         id: c.id,
                         name: c.name || '',
                         imageUrl: c.imageUrl || '',
-                        votes: Number(c.votes) || 0
+                        votes: Number(c.votes) || 0,
+                        bio: c.bio || '',
+                        policies: c.policies || ''
                     });
                     this.notify(`已儲存 ${c.id} 號 ${c.name}`);
                 },
@@ -735,7 +757,9 @@
                             id: c.id,
                             name: c.name || '',
                             imageUrl: final,
-                            votes: Number(c.votes) || 0
+                            votes: Number(c.votes) || 0,
+                            bio: c.bio || '',
+                            policies: c.policies || ''
                         });
                         const sizeKb = Math.round(final.length / 1024);
                         this.notify(`✓ ${c.id} 號 ${c.name} 照片已更新（${sizeKb} KB）`);
@@ -795,7 +819,14 @@
                     if (!silent && !confirm('還原為預設 6 位候選人？目前所有資料（含票數）會被覆蓋。')) return;
                     const data = {};
                     for (const c of DEFAULT_CANDIDATES) {
-                        data[c.id] = { id: c.id, name: c.name, imageUrl: c.imageUrl, votes: 0 };
+                        data[c.id] = {
+                            id: c.id,
+                            name: c.name,
+                            imageUrl: c.imageUrl,
+                            votes: 0,
+                            bio: c.bio || '',
+                            policies: c.policies || ''
+                        };
                     }
                     await set(ref(db, 'election/candidates'), data);
                     if (!silent) this.notify('已還原為預設候選人');
@@ -953,7 +984,7 @@
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script defer src="sound.js?v=1.0.18"></script>
-    <script defer src="version-check.js?v=1.0.18"></script>
+    <script defer src="sound.js?v=1.0.19"></script>
+    <script defer src="version-check.js?v=1.0.19"></script>
 </body>
 </html>

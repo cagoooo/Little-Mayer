@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.18">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.18">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.18">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.19">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.19">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.19">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.18">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.18">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.19">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.19">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.18">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.19">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -239,7 +239,8 @@
         <!-- 候選人卡片網格：手機 2 欄、平板 3 欄、桌機 6 欄一排 -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-3 flex-grow">
             <template x-for="(c, idx) in sortedCandidates" :key="c.id">
-                <div class="card-elev bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative"
+                <div class="card-elev bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative cursor-pointer"
+                     @click="openCandidateModal(c)"
                      :id="'card-' + c.id"
                      :class="{ 'ring-4 ring-yellow-400 ring-offset-2': isLeader(c) }">
 
@@ -310,12 +311,118 @@
                                      :class="rankBarColor(c)"
                                      :style="`width: ${maxVotes > 0 ? (c.votes / maxVotes) * 100 : 0}%`"></div>
                             </div>
+
+                            <!-- 點擊提示 -->
+                            <div class="text-[10px] lg:text-xs text-blue-500 font-medium text-center -mb-1 mt-1 flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-hand-pointer"></i>
+                                <span>點此看政見</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </template>
         </div>
     </main>
+
+    <!-- ============= 候選人政見 Modal ============= -->
+    <div x-show="modalCandidate"
+         x-transition.opacity
+         class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-3 lg:p-6"
+         @click="closeCandidateModal()"
+         @keydown.escape.window="closeCandidateModal()">
+        <template x-if="modalCandidate">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto"
+                 @click.stop>
+                <!-- Modal 頂部：照片 + 號碼 + 姓名 -->
+                <div class="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white p-5 lg:p-7">
+                    <button @click="closeCandidateModal()"
+                            class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center transition-colors text-lg"
+                            title="關閉 (Esc)">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="flex items-center gap-4 lg:gap-6">
+                        <!-- 頭像 -->
+                        <div class="flex-shrink-0 w-24 h-24 lg:w-32 lg:h-32 rounded-2xl overflow-hidden bg-white/20 ring-4 ring-white/40 shadow-xl">
+                            <template x-if="modalCandidate && modalCandidate.imageUrl">
+                                <img :src="modalCandidate.imageUrl" :alt="modalCandidate.name"
+                                     class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="modalCandidate && !modalCandidate.imageUrl">
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <i class="fa-solid fa-user text-white/60 text-5xl"></i>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <!-- 號碼徽章 -->
+                            <div class="inline-flex items-baseline gap-0.5 bg-white text-blue-700 px-3 py-1 rounded-lg shadow-md mb-2">
+                                <span class="text-xl lg:text-2xl font-black tabular-nums" x-text="modalCandidate ? modalCandidate.id : ''"></span>
+                                <span class="text-xs font-bold opacity-80">號候選人</span>
+                            </div>
+                            <h2 class="text-3xl lg:text-4xl xl:text-5xl font-black tracking-wide drop-shadow-md" x-text="modalCandidate ? modalCandidate.name : ''"></h2>
+                            <div class="text-sm lg:text-base text-white/90 mt-1.5 flex items-center gap-2">
+                                <i class="fa-solid fa-square-poll-vertical"></i>
+                                <span>目前得票 <strong class="tabular-nums" x-text="modalCandidate ? modalCandidate.votes.toLocaleString() : '0'"></strong> 票</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal 內容：經歷 + 政見 -->
+                <div class="p-5 lg:p-7 space-y-6">
+                    <!-- 經歷 -->
+                    <section>
+                        <h3 class="text-lg lg:text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-medal text-amber-500"></i>
+                            個人經歷
+                        </h3>
+                        <div x-show="modalCandidate && modalCandidate.bio"
+                             class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <ul class="space-y-1.5 text-slate-700 text-sm lg:text-base">
+                                <template x-for="line in (modalCandidate ? modalCandidate.bio.split('\n').filter(s => s.trim()) : [])" :key="line">
+                                    <li class="flex items-start gap-2">
+                                        <i class="fa-solid fa-check text-emerald-500 mt-1 text-xs flex-shrink-0"></i>
+                                        <span x-text="line"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div x-show="!modalCandidate || !modalCandidate.bio"
+                             class="text-slate-400 text-sm italic">尚未提供經歷資訊</div>
+                    </section>
+
+                    <!-- 政見 -->
+                    <section>
+                        <h3 class="text-lg lg:text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-bullhorn text-rose-500"></i>
+                            政見內容
+                        </h3>
+                        <div x-show="modalCandidate && modalCandidate.policies"
+                             class="bg-gradient-to-br from-rose-50 to-amber-50 rounded-xl p-4 border border-rose-200">
+                            <ul class="space-y-2.5 text-slate-800 text-sm lg:text-base leading-relaxed">
+                                <template x-for="line in (modalCandidate ? modalCandidate.policies.split('\n').filter(s => s.trim()) : [])" :key="line">
+                                    <li class="flex items-start gap-2">
+                                        <i class="fa-solid fa-star text-amber-500 mt-1 text-xs flex-shrink-0"></i>
+                                        <span x-text="line"></span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                        <div x-show="!modalCandidate || !modalCandidate.policies"
+                             class="text-slate-400 text-sm italic">尚未提供政見資訊</div>
+                    </section>
+                </div>
+
+                <!-- Modal 底部：關閉按鈕 -->
+                <div class="p-4 lg:p-5 border-t border-slate-100 bg-slate-50 rounded-b-2xl text-center">
+                    <button @click="closeCandidateModal()"
+                            class="bg-slate-700 hover:bg-slate-800 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                        <i class="fa-solid fa-xmark mr-1.5"></i> 關閉
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
 
     <footer class="bg-slate-800 text-slate-400 py-2">
         <div class="max-w-[1600px] mx-auto px-4 text-center text-xs">
@@ -346,6 +453,7 @@
                 muted: localStorage.getItem('lm_muted') === '1',
                 isFullscreen: false,
                 now: Date.now(),
+                modalCandidate: null,
                 _prevVotes: {},
                 _prevLeaderKey: '',
                 _firstLoad: true,
@@ -381,9 +489,17 @@
                                     id: Number(c.id),
                                     name: c.name || '',
                                     imageUrl: c.imageUrl || '',
-                                    votes: Number(c.votes) || 0
+                                    votes: Number(c.votes) || 0,
+                                    bio: c.bio || '',
+                                    policies: c.policies || ''
                                 }))
                                 .sort((a, b) => a.id - b.id);
+
+                            // 若 modal 開啟中，同步更新該候選人最新資料（票數會即時跳）
+                            if (this.modalCandidate) {
+                                const fresh = this.candidates.find(c => c.id === this.modalCandidate.id);
+                                if (fresh) this.modalCandidate = fresh;
+                            }
                         }
                         this.handleVoteChange();
                         this.lastUpdate = new Date().toLocaleTimeString('zh-TW', { hour12: false });
@@ -680,6 +796,15 @@
                     } catch (e) {
                         console.warn('[Fullscreen]', e);
                     }
+                },
+
+                openCandidateModal(c) {
+                    this.modalCandidate = c;
+                    document.body.style.overflow = 'hidden';
+                },
+                closeCandidateModal() {
+                    this.modalCandidate = null;
+                    document.body.style.overflow = '';
                 }
             };
         };
@@ -687,7 +812,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="sound.js?v=1.0.18"></script>
-    <script defer src="version-check.js?v=1.0.18"></script>
+    <script defer src="sound.js?v=1.0.19"></script>
+    <script defer src="version-check.js?v=1.0.19"></script>
 </body>
 </html>
