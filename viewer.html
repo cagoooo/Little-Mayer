@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.24">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.24">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.24">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.25">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.25">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.25">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.24">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.24">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.25">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.25">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.24">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.25">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -719,6 +719,10 @@
 
             <!-- 行動按鈕 -->
             <div class="winner-card mt-6 lg:mt-8 flex flex-wrap items-center justify-center gap-3">
+                <button @click="replayCelebration()"
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-3 rounded-xl font-bold text-sm lg:text-base shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> 再看一次
+                </button>
                 <button x-show="meta.liveVideoUrl"
                         @click="closeCelebration(); openLiveModal()"
                         class="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl font-bold text-sm lg:text-base shadow-lg flex items-center gap-2">
@@ -1166,16 +1170,28 @@
                     if (!this.modalCandidate && !this.noticeOpen && !this.celebrationOpen) document.body.style.overflow = '';
                 },
 
-                // 偵測 admin 觸發的公告事件（celebrateAt timestamp 變化）
+                // 偵測是否要播放當選公告：
+                //   首次載入：已封存 + 有當選人 → 自動播放（儀式感，每次進站都看到）
+                //   後續：admin 改 celebrateAt timestamp 即觸發（同步重播）
                 maybeTriggerCelebration() {
                     const ts = Number(this.meta.celebrateAt) || 0;
-                    if (!ts) { this._lastCelebrateAt = 0; return; }
-                    // 首次載入：只記錄 timestamp，不自動播放（避免進站就被打擾）
-                    if (this._lastCelebrateAt === 0 && this._firstLoad) {
+
+                    // 首次載入處理
+                    if (this._lastCelebrateAt === 0) {
                         this._lastCelebrateAt = ts;
+                        if (this.meta.locked) {
+                            // 延遲一點讓 candidates 載完、避免阻擋首屏渲染
+                            setTimeout(() => {
+                                if (this.leaderCandidates.length > 0 && !this.celebrationOpen) {
+                                    this.openCelebration();
+                                }
+                            }, 1200);
+                        }
                         return;
                     }
-                    if (ts !== this._lastCelebrateAt) {
+
+                    // 後續：timestamp 變化即觸發
+                    if (ts && ts !== this._lastCelebrateAt) {
                         this._lastCelebrateAt = ts;
                         this.openCelebration();
                     }
@@ -1201,6 +1217,13 @@
                 closeCelebration() {
                     this.celebrationOpen = false;
                     if (!this.modalCandidate && !this.noticeOpen && !this.liveOpen) document.body.style.overflow = '';
+                },
+                // 不關 modal，重播 confetti + 音效（給「再看一次」按鈕用）
+                replayCelebration() {
+                    this.launchConfetti();
+                    setTimeout(() => this.launchConfetti(), 800);
+                    setTimeout(() => this.launchConfetti(), 1600);
+                    if (window.lmSound) window.lmSound.celebrate();
                 },
                 launchConfetti() {
                     const colors = ['#fbbf24', '#f97316', '#ef4444', '#ec4899', '#a855f7', '#3b82f6', '#10b981'];
@@ -1240,7 +1263,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="sound.js?v=1.0.24"></script>
-    <script defer src="version-check.js?v=1.0.24"></script>
+    <script defer src="sound.js?v=1.0.25"></script>
+    <script defer src="version-check.js?v=1.0.25"></script>
 </body>
 </html>
