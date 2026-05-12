@@ -37,5 +37,6 @@ export const DEFAULT_CANDIDATES = [
 export const DEFAULT_META = {
   title: "石門國小第29屆自治市市長選舉",
   subtitle: "計票實況",
-  locked: false  // true 時 admin 也無法再加票
+  locked: false, // true 時 admin 也無法再加票
+  openAt: ""     // datetime-local 格式 "2026-05-11T14:30"；空字串 = 立即開放
 };

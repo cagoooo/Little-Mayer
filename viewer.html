@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.17">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.17">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.17">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.18">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.18">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.18">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.17">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.17">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.18">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.18">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.17">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.18">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -132,6 +132,20 @@
         /* 卡片 hover 微互動 */
         .card-elev { transition: transform .25s ease; }
         .card-elev:hover { transform: translateY(-3px); }
+
+        /* 倒數 banner 呼吸光暈 */
+        @keyframes countdown-breath {
+            0%, 100% { box-shadow: 0 8px 32px rgba(139, 92, 246, 0.35); }
+            50%      { box-shadow: 0 8px 48px rgba(139, 92, 246, 0.65); }
+        }
+        .countdown-glow { animation: countdown-breath 2.5s ease-in-out infinite; }
+
+        /* 倒數數字最後 10 秒緊張閃爍 */
+        @keyframes urgent-flash {
+            0%, 100% { color: #fff;       text-shadow: 0 0 16px rgba(252, 165, 165, 0.6); }
+            50%      { color: #fecaca;    text-shadow: 0 0 28px rgba(254, 202, 202, 1); }
+        }
+        .urgent-flash { animation: urgent-flash .7s ease-in-out infinite; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col" x-data="viewerApp()" x-init="init()" x-cloak>
@@ -185,6 +199,21 @@
         <div x-show="loadError" class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl text-sm">
             <i class="fa-solid fa-triangle-exclamation mr-2"></i>
             <span x-text="loadError"></span>
+        </div>
+
+        <!-- 倒數開票 banner -->
+        <div x-show="countdownState === 'pending'"
+             class="countdown-glow bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white rounded-2xl shadow-xl px-5 py-4 lg:py-5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-stopwatch text-3xl lg:text-4xl"></i>
+                <div class="leading-tight">
+                    <div class="text-[11px] lg:text-xs opacity-90 font-medium uppercase tracking-widest">距離開票還有</div>
+                    <div class="text-sm lg:text-base font-bold mt-0.5" x-text="`預定開票時間：${formatOpenAt(meta.openAt)}`"></div>
+                </div>
+            </div>
+            <div class="tabular-nums font-black text-4xl lg:text-6xl xl:text-7xl tracking-wide"
+                 :class="{ 'urgent-flash': countdownRemaining > 0 && countdownRemaining <= 10000 }"
+                 x-text="countdownStr"></div>
         </div>
 
         <!-- 統計列 -->
@@ -316,9 +345,11 @@
                 lastUpdate: '',
                 muted: localStorage.getItem('lm_muted') === '1',
                 isFullscreen: false,
+                now: Date.now(),
                 _prevVotes: {},
                 _prevLeaderKey: '',
                 _firstLoad: true,
+                _lastCountdownState: 'unknown',
 
                 init() {
                     onValue(ref(db, '.info/connected'), (snap) => {
@@ -329,6 +360,16 @@
                     document.addEventListener('fullscreenchange', () => {
                         this.isFullscreen = !!document.fullscreenElement;
                     });
+
+                    // 倒數 tick：每秒更新 now，並偵測 pending → live 的瞬間
+                    this._tickTimer = setInterval(() => {
+                        this.now = Date.now();
+                        const cur = this.countdownState;
+                        if (this._lastCountdownState === 'pending' && cur === 'live') {
+                            this.fireOpenMoment();
+                        }
+                        this._lastCountdownState = cur;
+                    }, 1000);
 
                     onValue(ref(db, 'election/candidates'), (snap) => {
                         const v = snap.val();
@@ -486,6 +527,57 @@
                     }, 100);
                 },
 
+                // 倒數計算
+                get openAtMs() {
+                    if (!this.meta.openAt) return null;
+                    const t = new Date(this.meta.openAt).getTime();
+                    return isNaN(t) ? null : t;
+                },
+                get countdownRemaining() {
+                    if (this.openAtMs === null) return -1;
+                    return Math.max(0, this.openAtMs - this.now);
+                },
+                get countdownState() {
+                    if (this.openAtMs === null) return 'none';
+                    return this.countdownRemaining > 0 ? 'pending' : 'live';
+                },
+                get countdownStr() {
+                    const ms = this.countdownRemaining;
+                    if (ms < 0) return '';
+                    const s = Math.ceil(ms / 1000);
+                    const hh = Math.floor(s / 3600);
+                    const mm = Math.floor((s % 3600) / 60);
+                    const ss = s % 60;
+                    const pad = n => String(n).padStart(2, '0');
+                    return hh > 0 ? `${pad(hh)}:${pad(mm)}:${pad(ss)}` : `${pad(mm)}:${pad(ss)}`;
+                },
+                formatOpenAt(s) {
+                    if (!s) return '';
+                    const t = new Date(s);
+                    if (isNaN(t.getTime())) return '';
+                    const pad = n => String(n).padStart(2, '0');
+                    return `${t.getMonth()+1}/${t.getDate()} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
+                },
+
+                fireOpenMoment() {
+                    // 全螢幕大 toast 「🔔 開票時間到」
+                    const toast = document.createElement('div');
+                    toast.className = 'leader-toast';
+                    toast.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                    toast.innerHTML = `
+                        <span class="emoji">🔔</span>
+                        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
+                            <span>開票時間到！</span>
+                            <span style="font-size:18px;font-weight:600;opacity:.9;">LIVE 開票進行中</span>
+                        </div>
+                    `;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3100);
+
+                    // 播 leaderChange 上升和弦音
+                    if (window.lmSound) window.lmSound.leaderChange();
+                },
+
                 get totalVotes() {
                     return this.candidates.reduce((s, c) => s + c.votes, 0);
                 },
@@ -595,7 +687,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="sound.js?v=1.0.17"></script>
-    <script defer src="version-check.js?v=1.0.17"></script>
+    <script defer src="sound.js?v=1.0.18"></script>
+    <script defer src="version-check.js?v=1.0.18"></script>
 </body>
 </html>
