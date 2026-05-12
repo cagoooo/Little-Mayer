@@ -1,5 +1,5 @@
 {
-  "version": "1.0.28",
-  "released": "2026-05-13T07:03:28+08:00",
-  "notes": "校網 iframe README + 學校 LOGO 上傳 + 政見海報 poster.html + 時間軸動畫 chart.js"
+  "version": "1.0.29",
+  "released": "2026-05-13T07:57:23+08:00",
+  "notes": "當選承諾政見排版升級：圓形編號徽章 + 裝飾線標題 + 政見公告書風格"
 }
