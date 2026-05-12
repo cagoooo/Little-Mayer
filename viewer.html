@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.20">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.20">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.20">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.21">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.21">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.21">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.20">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.20">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.21">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.21">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.20">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.21">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -146,6 +146,19 @@
             50%      { color: #fecaca;    text-shadow: 0 0 28px rgba(254, 202, 202, 1); }
         }
         .urgent-flash { animation: urgent-flash .7s ease-in-out infinite; }
+
+        /* LIVE 紅點脈衝（吸引注意，呼吸式擴張） */
+        @keyframes live-pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.8); }
+            70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+            100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+        }
+        .live-pulse { animation: live-pulse 1.4s infinite; }
+        @keyframes live-blink {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: .35; }
+        }
+        .live-blink-text { animation: live-blink 1.4s infinite; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col" x-data="viewerApp()" x-init="init()" x-cloak>
@@ -174,6 +187,15 @@
                     <i class="fa-solid fa-scale-balanced"></i>
                     <span x-text="`${leaderCandidates.length} 人並列領先`"></span>
                 </div>
+                <!-- 開票現場直播按鈕 -->
+                <button x-show="meta.liveVideoUrl"
+                        @click="openLiveModal()"
+                        class="live-pulse bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5 shadow"
+                        title="觀看開票現場直播">
+                    <span class="w-2 h-2 rounded-full bg-white live-blink-text"></span>
+                    <span class="live-blink-text">LIVE</span>
+                    <span class="hidden sm:inline">開票直播</span>
+                </button>
                 <!-- 選舉注意事項按鈕 -->
                 <button x-show="meta.noticeVideoUrl"
                         @click="openNoticeModal()"
@@ -507,6 +529,59 @@
         </div>
     </div>
 
+    <!-- ============= 開票現場直播 Modal ============= -->
+    <div x-show="liveOpen"
+         x-transition.opacity
+         class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-3 lg:p-6"
+         @click="closeLiveModal()"
+         @keydown.escape.window="closeLiveModal()">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-y-auto"
+             @click.stop>
+            <!-- 標題列：紅色 LIVE 漸層 -->
+            <div class="relative bg-gradient-to-br from-red-600 via-rose-600 to-pink-700 text-white p-5 lg:p-6">
+                <button @click="closeLiveModal()"
+                        class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center transition-colors text-lg"
+                        title="關閉 (Esc)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h2 class="text-2xl lg:text-3xl font-black flex items-center gap-3 drop-shadow-md">
+                    <span class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-base lg:text-lg">
+                        <span class="w-2.5 h-2.5 rounded-full bg-white live-blink-text"></span>
+                        <span class="live-blink-text">LIVE</span>
+                    </span>
+                    開票現場直播
+                </h2>
+                <p class="text-white/90 text-sm lg:text-base mt-1.5" x-text="meta.title || '石門國小自治市市長選舉'"></p>
+            </div>
+
+            <!-- 直播影片區 -->
+            <div class="p-5 lg:p-6">
+                <div class="relative w-full rounded-xl overflow-hidden shadow-lg bg-black" style="padding-bottom: 56.25%;">
+                    <iframe x-show="liveOpen"
+                            :src="liveOpen ? ytEmbed(meta.liveVideoUrl) + '?autoplay=1' : ''"
+                            class="absolute inset-0 w-full h-full"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                </div>
+                <div class="text-center mt-3">
+                    <a :href="meta.liveVideoUrl" target="_blank" rel="noopener"
+                       class="text-xs text-slate-500 hover:text-red-600 transition-colors">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>
+                        在 YouTube 開啟（全螢幕觀看更佳）
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-4 lg:p-5 border-t border-slate-100 bg-slate-50 rounded-b-2xl text-center">
+                <button @click="closeLiveModal()"
+                        class="bg-slate-700 hover:bg-slate-800 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">
+                    <i class="fa-solid fa-xmark mr-1.5"></i> 關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-slate-800 text-slate-400 py-2">
         <div class="max-w-[1600px] mx-auto px-4 text-center text-xs">
             Made with <span class="text-red-400">❤</span> by
@@ -538,6 +613,7 @@
                 now: Date.now(),
                 modalCandidate: null,
                 noticeOpen: false,
+                liveOpen: false,
                 _prevVotes: {},
                 _prevLeaderKey: '',
                 _firstLoad: true,
@@ -889,7 +965,7 @@
                 },
                 closeCandidateModal() {
                     this.modalCandidate = null;
-                    if (!this.noticeOpen) document.body.style.overflow = '';
+                    if (!this.noticeOpen && !this.liveOpen) document.body.style.overflow = '';
                 },
                 openNoticeModal() {
                     this.noticeOpen = true;
@@ -897,12 +973,20 @@
                 },
                 closeNoticeModal() {
                     this.noticeOpen = false;
-                    if (!this.modalCandidate) document.body.style.overflow = '';
+                    if (!this.modalCandidate && !this.liveOpen) document.body.style.overflow = '';
+                },
+                openLiveModal() {
+                    this.liveOpen = true;
+                    document.body.style.overflow = 'hidden';
+                },
+                closeLiveModal() {
+                    this.liveOpen = false;
+                    if (!this.modalCandidate && !this.noticeOpen) document.body.style.overflow = '';
                 },
                 // 將 YouTube URL 轉成 embed 形式
                 ytEmbed(url) {
                     if (!url) return '';
-                    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]+)/);
+                    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]+)/);
                     return m ? `https://www.youtube.com/embed/${m[1]}` : '';
                 }
             };
@@ -911,7 +995,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="sound.js?v=1.0.20"></script>
-    <script defer src="version-check.js?v=1.0.20"></script>
+    <script defer src="sound.js?v=1.0.21"></script>
+    <script defer src="version-check.js?v=1.0.21"></script>
 </body>
 </html>

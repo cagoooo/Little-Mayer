@@ -69,5 +69,6 @@ export const DEFAULT_META = {
   subtitle: "計票實況",
   locked: false, // true 時 admin 也無法再加票
   openAt: "",    // datetime-local 格式 "2026-05-11T14:30"；空字串 = 立即開放
-  noticeVideoUrl: "https://youtu.be/DR3DSUI8cI0"  // 選舉注意事項影片
+  noticeVideoUrl: "https://youtu.be/DR3DSUI8cI0",        // 選舉注意事項影片
+  liveVideoUrl: "https://www.youtube.com/live/ZIRZ0Qk0B7A" // 開票現場 YouTube 直播
 };

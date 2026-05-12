@@ -1,5 +1,5 @@
 {
-  "version": "1.0.20",
-  "released": "2026-05-12T11:44:03+08:00",
-  "notes": "新增候選人宣傳影片 + 選舉注意事項影片：YouTube iframe 嵌入兩個 modal"
+  "version": "1.0.21",
+  "released": "2026-05-12T12:15:55+08:00",
+  "notes": "新增開票現場 YouTube 直播：viewer header 紅色 LIVE 按鈕 + 大型直播 modal"
 }
