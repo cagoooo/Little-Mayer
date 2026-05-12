@@ -1,5 +1,5 @@
 {
-  "version": "1.0.23",
-  "released": "2026-05-12T14:06:03+08:00",
-  "notes": "觀眾人數 presence + PDF 結果報告 report.html + OBS 直播浮層 overlay.html"
+  "version": "1.0.24",
+  "released": "2026-05-12T14:15:51+08:00",
+  "notes": "修正 report/overlay 一直跳更新通知：bump 腳本加入兩新檔的 ?v= 替換"
 }
