@@ -1,5 +1,5 @@
 {
-  "version": "1.0.19",
-  "released": "2026-05-12T11:26:07+08:00",
-  "notes": "候選人經歷與政見：viewer 點卡片彈出 modal，admin 設定可編輯，已從選舉公報帶入內容"
+  "version": "1.0.20",
+  "released": "2026-05-12T11:44:03+08:00",
+  "notes": "新增候選人宣傳影片 + 選舉注意事項影片：YouTube iframe 嵌入兩個 modal"
 }

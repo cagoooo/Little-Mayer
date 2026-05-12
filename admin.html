@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.19">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.19">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.19">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.20">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.20">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.20">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.19">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.20">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -331,6 +331,20 @@
                                 留空 = 立即開放；設定時間後監票畫面會顯示倒數，開票員仍可隨時加票。
                             </p>
                         </div>
+
+                        <!-- 選舉注意事項影片 -->
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                <i class="fa-brands fa-youtube text-red-600 mr-1"></i>
+                                選舉注意事項影片（YouTube 連結，選填）
+                            </label>
+                            <input type="text" x-model="meta.noticeVideoUrl" @change="saveMeta()"
+                                   placeholder="https://youtu.be/xxxxx"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none">
+                            <p class="text-xs text-slate-500 mt-1.5">
+                                填入後監票畫面右上角會出現「注意事項」按鈕，點擊播放影片。
+                            </p>
+                        </div>
                     </div>
 
                     <!-- 候選人管理 -->
@@ -405,6 +419,16 @@
                                                 <textarea x-model="c.policies" rows="3" placeholder="一、xxx&#10;二、yyy&#10;..."
                                                           class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-700 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none resize-y"></textarea>
                                             </div>
+                                        </div>
+
+                                        <!-- 宣傳影片 YouTube 連結 -->
+                                        <div class="md:col-span-3">
+                                            <label class="block text-[10px] text-slate-500 font-medium mb-0.5">
+                                                <i class="fa-brands fa-youtube text-red-600 mr-0.5"></i>宣傳影片 YouTube 連結（選填）
+                                            </label>
+                                            <input type="text" x-model="c.videoUrl"
+                                                   placeholder="https://youtu.be/xxxxx"
+                                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-700 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none">
                                         </div>
                                     </div>
 
@@ -571,7 +595,8 @@
                             imageUrl: c.imageUrl || '',
                             votes: Number(c.votes) || 0,
                             bio: c.bio || '',
-                            policies: c.policies || ''
+                            policies: c.policies || '',
+                            videoUrl: c.videoUrl || ''
                         })).sort((a, b) => a.id - b.id);
                     });
 
@@ -698,7 +723,8 @@
                         title: this.meta.title || '',
                         subtitle: this.meta.subtitle || '',
                         locked: !!this.meta.locked,
-                        openAt: this.meta.openAt || ''
+                        openAt: this.meta.openAt || '',
+                        noticeVideoUrl: this.meta.noticeVideoUrl || ''
                     });
                     this.notify('活動資訊已儲存');
                 },
@@ -719,7 +745,8 @@
                         imageUrl: c.imageUrl || '',
                         votes: Number(c.votes) || 0,
                         bio: c.bio || '',
-                        policies: c.policies || ''
+                        policies: c.policies || '',
+                        videoUrl: c.videoUrl || ''
                     });
                     this.notify(`已儲存 ${c.id} 號 ${c.name}`);
                 },
@@ -759,7 +786,8 @@
                             imageUrl: final,
                             votes: Number(c.votes) || 0,
                             bio: c.bio || '',
-                            policies: c.policies || ''
+                            policies: c.policies || '',
+                            videoUrl: c.videoUrl || ''
                         });
                         const sizeKb = Math.round(final.length / 1024);
                         this.notify(`✓ ${c.id} 號 ${c.name} 照片已更新（${sizeKb} KB）`);
@@ -825,7 +853,8 @@
                             imageUrl: c.imageUrl,
                             votes: 0,
                             bio: c.bio || '',
-                            policies: c.policies || ''
+                            policies: c.policies || '',
+                            videoUrl: c.videoUrl || ''
                         };
                     }
                     await set(ref(db, 'election/candidates'), data);
@@ -984,7 +1013,7 @@
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script defer src="sound.js?v=1.0.19"></script>
-    <script defer src="version-check.js?v=1.0.19"></script>
+    <script defer src="sound.js?v=1.0.20"></script>
+    <script defer src="version-check.js?v=1.0.20"></script>
 </body>
 </html>
