@@ -4,7 +4,7 @@
 //   - JS / CSS / 照片：cache-first（含版本字串自然失效）
 //   - Firebase / Google API / CDN：直通網路（不攔不快取）
 
-const VERSION = 'v1.0.22';                 // 部署時由 bump-version 腳本更新
+const VERSION = 'v1.0.23';                 // 部署時由 bump-version 腳本更新
 const STATIC_CACHE = `little-mayor-static-${VERSION}`;
 const HTML_CACHE   = `little-mayor-html-${VERSION}`;
 
@@ -13,6 +13,8 @@ const PRECACHE = [
   './index.html',
   './viewer.html',
   './admin.html',
+  './report.html',
+  './overlay.html',
   './firebase-config.js',
   './version-check.js',
   './sound.js',

@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.22">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.22">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.22">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.23">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.23">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.23">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.23">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.23">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.23">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -224,6 +224,14 @@
             </div>
 
             <div class="flex items-center gap-3">
+                <!-- 觀眾人數 -->
+                <div x-show="viewerCount > 0"
+                     class="flex items-center gap-1.5 bg-white/15 backdrop-blur px-2.5 py-1 rounded-full text-xs font-medium"
+                     :title="`目前 ${viewerCount} 位觀眾 + ${adminCount} 位唱票員上線`">
+                    <i class="fa-solid fa-users text-emerald-300"></i>
+                    <span class="tabular-nums" x-text="viewerCount"></span>
+                    <span class="opacity-80">人在看</span>
+                </div>
                 <div class="flex items-center gap-1.5 bg-white/15 backdrop-blur px-2.5 py-1 rounded-full text-xs">
                     <span class="w-2 h-2 rounded-full live-dot" :class="connected ? 'bg-emerald-400' : 'bg-rose-400'"></span>
                     <span x-text="connected ? '即時' : '中斷'"></span>
@@ -737,7 +745,7 @@
     <!-- Module 必須在 Alpine 之前載入 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+        import { getDatabase, ref, onValue, set, onDisconnect, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
         import { firebaseConfig, DEFAULT_CANDIDATES, DEFAULT_META } from "./firebase-config.js";
 
         const app = initializeApp(firebaseConfig);
@@ -758,6 +766,8 @@
                 liveOpen: false,
                 celebrationOpen: false,
                 celebrationWinners: [],
+                viewerCount: 0,
+                adminCount: 0,
                 _prevVotes: {},
                 _prevLeaderKey: '',
                 _firstLoad: true,
@@ -765,8 +775,32 @@
                 _lastCelebrateAt: 0,
 
                 init() {
+                    // 自己的 presence 節點（隨機 ID）— 連線時寫入、斷線時自動刪除
+                    const myPresenceRef = push(ref(db, 'election/presence'));
+
                     onValue(ref(db, '.info/connected'), (snap) => {
                         this.connected = snap.val() === true;
+                        if (this.connected) {
+                            // 斷線自動清除
+                            onDisconnect(myPresenceRef).remove();
+                            // 立即寫入
+                            set(myPresenceRef, {
+                                ts: serverTimestamp(),
+                                role: 'viewer'
+                            });
+                        }
+                    });
+
+                    // 訂閱整個 presence path，依 role 分別計數
+                    onValue(ref(db, 'election/presence'), (snap) => {
+                        let v = 0, a = 0;
+                        snap.forEach(c => {
+                            const r = (c.val() && c.val().role) || 'viewer';
+                            if (r === 'admin') a++;
+                            else v++;
+                        });
+                        this.viewerCount = v;
+                        this.adminCount = a;
                     });
 
                     // 同步全螢幕狀態（使用者按 Esc 退出時也能更新）
@@ -1206,7 +1240,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="sound.js?v=1.0.22"></script>
-    <script defer src="version-check.js?v=1.0.22"></script>
+    <script defer src="sound.js?v=1.0.23"></script>
+    <script defer src="version-check.js?v=1.0.23"></script>
 </body>
 </html>

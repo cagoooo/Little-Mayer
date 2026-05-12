@@ -1,5 +1,5 @@
 {
-  "version": "1.0.22",
-  "released": "2026-05-12T14:00:17+08:00",
-  "notes": "開票完成公告畫面：全螢幕慶祝 + 五彩 confetti + 鳴禮炮音效"
+  "version": "1.0.23",
+  "released": "2026-05-12T14:06:03+08:00",
+  "notes": "觀眾人數 presence + PDF 結果報告 report.html + OBS 直播浮層 overlay.html"
 }

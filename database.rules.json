@@ -26,6 +26,13 @@
       },
       "log": {
         ".indexOn": ["ts"]
+      },
+      "presence": {
+        ".read": true,
+        "$sid": {
+          ".write": true,
+          ".validate": "newData.hasChild('ts')"
+        }
       }
     }
   }

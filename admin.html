@@ -8,16 +8,16 @@
     <meta name="robots" content="noindex"> <!-- 後台不要被搜尋引擎索引 -->
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.22">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.22">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.22">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.23">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.23">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.23">
 
     <!-- Open Graph（後台分享機率低，但保持風格一致） -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/admin.html">
     <meta property="og:title" content="後台唱票系統｜石門國小自治市市長選舉">
     <meta property="og:description" content="教師唱票員專用後台 — 即時加票，全校監票畫面同步更新。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.22">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.23">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="zh_TW">
@@ -172,6 +172,15 @@
                             <span x-text="meta.locked ? '已封存' : '計票中'"></span>
                         </button>
 
+                        <!-- 觀眾人數（只有當有人在看才顯示） -->
+                        <div x-show="viewerCount > 0"
+                             class="flex items-center gap-1 bg-emerald-500/30 backdrop-blur px-2.5 py-1 rounded-lg text-xs font-medium"
+                             :title="`目前 ${viewerCount} 位觀眾 + ${adminCount} 位唱票員上線`">
+                            <i class="fa-solid fa-users"></i>
+                            <span class="tabular-nums" x-text="viewerCount"></span>
+                            <span class="hidden sm:inline">人在看</span>
+                        </div>
+
                         <div class="flex items-center gap-1 bg-white/15 backdrop-blur px-2.5 py-1 rounded-lg text-xs">
                             <span class="w-2 h-2 rounded-full" :class="connected ? 'bg-emerald-300' : 'bg-rose-300'"></span>
                             <span x-text="connected ? '已連線' : '中斷'"></span>
@@ -223,6 +232,16 @@
                                 <i class="fa-solid" :class="busyShot ? 'fa-circle-notch fa-spin' : 'fa-camera'"></i>
                                 <span x-text="busyShot ? '截圖中...' : '截圖存檔'"></span>
                             </button>
+                            <a href="report.html" target="_blank" rel="noopener"
+                               class="bg-rose-100 hover:bg-rose-200 text-rose-800 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                               title="開啟正式 A4 開票結果報告（可列印為 PDF）">
+                                <i class="fa-solid fa-file-pdf"></i> 列印報告
+                            </a>
+                            <a href="overlay.html?layout=top3" target="_blank" rel="noopener"
+                               class="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                               title="OBS 直播浮層連結（透明背景，給直播主用）">
+                                <i class="fa-solid fa-video"></i> OBS 浮層
+                            </a>
                             <button x-show="meta.locked"
                                     @click="republishCelebration()"
                                     class="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow"
@@ -528,7 +547,8 @@
             onAuthStateChanged, setPersistence, browserLocalPersistence
         } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
         import {
-            getDatabase, ref, onValue, set, update, runTransaction, remove, push
+            getDatabase, ref, onValue, set, update, runTransaction, remove, push,
+            onDisconnect, serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
         import { firebaseConfig, DEFAULT_CANDIDATES, DEFAULT_META } from "./firebase-config.js";
 
@@ -557,6 +577,8 @@
                 muted: localStorage.getItem('lm_muted') === '1',
                 lastAction: null, // {type:'add'|'sub', id, by}
                 uploadingId: null, // 哪個候選人正在上傳照片
+                viewerCount: 0,
+                adminCount: 0,
 
                 toast: { show: false, msg: '', type: 'success' },
 
@@ -600,7 +622,24 @@
                 },
 
                 bindData() {
-                    onValue(ref(db, '.info/connected'), s => this.connected = s.val() === true);
+                    const myPresenceRef = push(ref(db, 'election/presence'));
+                    onValue(ref(db, '.info/connected'), (s) => {
+                        this.connected = s.val() === true;
+                        if (this.connected) {
+                            onDisconnect(myPresenceRef).remove();
+                            set(myPresenceRef, { ts: serverTimestamp(), role: 'admin' });
+                        }
+                    });
+                    onValue(ref(db, 'election/presence'), (snap) => {
+                        let v = 0, a = 0;
+                        snap.forEach(c => {
+                            const r = (c.val() && c.val().role) || 'viewer';
+                            if (r === 'admin') a++;
+                            else v++;
+                        });
+                        this.viewerCount = v;
+                        this.adminCount = a;
+                    });
 
                     onValue(ref(db, 'election/candidates'), async (snap) => {
                         const v = snap.val();
@@ -1046,7 +1085,7 @@
     <!-- Alpine 在 module 之後載入，確保 window.adminApp 已存在 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script defer src="sound.js?v=1.0.22"></script>
-    <script defer src="version-check.js?v=1.0.22"></script>
+    <script defer src="sound.js?v=1.0.23"></script>
+    <script defer src="version-check.js?v=1.0.23"></script>
 </body>
 </html>
