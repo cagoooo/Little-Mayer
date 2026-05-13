@@ -7,17 +7,17 @@
     <meta name="description" content="石門國小第29屆自治市市長選舉 — 即時監票畫面，6 位候選人票數即時同步、領先變動通知。">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.30">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.30">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.30">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1.0.31">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=1.0.31">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1.0.31">
 
     <!-- Open Graph / FB / LINE -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cagoooo.github.io/Little-Mayer/viewer.html">
     <meta property="og:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta property="og:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.30">
-    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.30">
+    <meta property="og:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.31">
+    <meta property="og:image:secure_url" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.31">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/png">
@@ -29,7 +29,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="監票實況｜石門國小第29屆自治市市長選舉">
     <meta name="twitter:description" content="全校班級即時監票畫面 — 6 位候選人票數同步、領先變動通知。">
-    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.30">
+    <meta name="twitter:image" content="https://cagoooo.github.io/Little-Mayer/assets/og-preview.png?v=1.0.31">
 
     <link rel="canonical" href="https://cagoooo.github.io/Little-Mayer/viewer.html">
 
@@ -89,6 +89,30 @@
             50%      { box-shadow: 0 0 0 10px rgba(250,204,21,0); }
         }
         .rank-pulse { animation: rank-pulse 1.8s ease-in-out infinite; }
+
+        /* ✨ 已封存 + 當選人專屬：卡片金光呼吸 + 微浮起 */
+        @keyframes elected-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,.7), 0 8px 24px rgba(250,204,21,.2); }
+            50%      { box-shadow: 0 0 0 20px rgba(250,204,21,0), 0 16px 40px rgba(250,204,21,.4); }
+        }
+        .elected-card {
+            animation: elected-glow 2.2s ease-in-out infinite;
+            transform: scale(1.03);
+            z-index: 5;
+        }
+        /* 「🏆 當選」橫幅輕微傾斜 + 跳動 */
+        @keyframes elected-banner-bounce {
+            0%, 100% { transform: translate(-50%, 0) rotate(-3deg) scale(1); }
+            50%      { transform: translate(-50%, -2px) rotate(-3deg) scale(1.05); }
+        }
+        .elected-banner { animation: elected-banner-bounce 1.4s ease-in-out infinite; }
+
+        /* 當選人票數金色閃光 */
+        @keyframes elected-num-glow {
+            0%, 100% { text-shadow: 0 0 0 rgba(245,158,11,0); }
+            50%      { text-shadow: 0 0 24px rgba(245,158,11,.7); }
+        }
+        .elected-num { animation: elected-num-glow 2.2s ease-in-out infinite; }
 
         /* 領先變動：新領先者大金光 */
         @keyframes leader-burst {
@@ -331,10 +355,14 @@
         <!-- 候選人卡片網格：手機 2 欄、平板 3 欄、桌機 6 欄一排 -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-3 flex-grow">
             <template x-for="(c, idx) in sortedCandidates" :key="c.id">
-                <div class="card-elev bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative cursor-pointer"
+                <div class="card-elev rounded-2xl shadow-md overflow-hidden flex flex-col relative cursor-pointer"
                      @click="openCandidateModal(c)"
                      :id="'card-' + c.id"
-                     :class="{ 'ring-4 ring-yellow-400 ring-offset-2': isLeader(c) }">
+                     :class="[
+                         isElected(c)
+                             ? 'bg-gradient-to-b from-amber-50 via-yellow-50 to-white elected-card ring-4 ring-yellow-400 ring-offset-2'
+                             : (isLeader(c) ? 'bg-white ring-4 ring-yellow-400 ring-offset-2' : 'bg-white')
+                     ]">
 
                     <!-- 排名圈（左上）— 同票同名次（dense ranking） -->
                     <div class="absolute top-2 left-2 z-10 rounded-full flex items-center justify-center font-black shadow-xl ring-2 ring-white"
@@ -349,8 +377,15 @@
                         <span x-text="`並列${rankTieCount(c)}人`"></span>
                     </div>
 
-                    <!-- 領先者皇冠（並列也都顯示） -->
-                    <div x-show="isLeader(c)"
+                    <!-- 已封存 + 當選：金色「🏆 當選」橫幅 -->
+                    <div x-show="isElected(c)"
+                         class="elected-banner absolute -top-3 left-1/2 z-30 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white px-3 py-1 rounded-md shadow-xl ring-2 ring-white font-black text-xs lg:text-sm whitespace-nowrap"
+                         style="transform: translate(-50%, 0) rotate(-3deg);">
+                        🏆 當選
+                    </div>
+
+                    <!-- 計票中第一名皇冠（封存後改用上方橫幅，不重複顯示） -->
+                    <div x-show="!isElected(c) && isLeader(c)"
                          class="absolute -top-2 right-1/2 translate-x-[60%] z-20 text-2xl crown-shine">
                         👑
                     </div>
@@ -385,8 +420,9 @@
                         <!-- 票數區塊（超大主視覺） -->
                         <div class="text-center flex-grow flex flex-col justify-center">
                             <div class="text-xs lg:text-sm text-slate-500 font-bold uppercase tracking-widest mb-1">得票</div>
-                            <div class="text-6xl lg:text-7xl xl:text-8xl font-black text-blue-600 tabular-nums leading-none"
+                            <div class="text-6xl lg:text-7xl xl:text-8xl font-black tabular-nums leading-none"
                                  :id="'num-' + c.id"
+                                 :class="isElected(c) ? 'text-amber-600 elected-num' : 'text-blue-600'"
                                  x-text="c.votes.toLocaleString()"></div>
                         </div>
 
@@ -1131,6 +1167,7 @@
                 rankOf(c)        { return this.rankMap[c.id]; },
                 rankTieCount(c)  { const r = this.rankMap[c.id]; return r ? this.tieCountByRank[r] : 0; },
                 isLeader(c)      { return this.rankMap[c.id] === 1; },
+                isElected(c)     { return !!this.meta.locked && this.rankMap[c.id] === 1; },
 
                 percentage(v) {
                     if (this.totalVotes === 0) return '0.0';
@@ -1336,7 +1373,7 @@
 
     <!-- Alpine 在 module 之後 -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="sound.js?v=1.0.30"></script>
-    <script defer src="version-check.js?v=1.0.30"></script>
+    <script defer src="sound.js?v=1.0.31"></script>
+    <script defer src="version-check.js?v=1.0.31"></script>
 </body>
 </html>
