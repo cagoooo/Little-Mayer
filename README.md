@@ -1,5 +1,7 @@
 # 🗳️ 石門國小自治市市長選舉計票系統
 
+> 📌 **目前版本：v1.0.32**（依據 程式內版本常數）
+
 即時計票 + 即時監票的雙端系統，部署在 GitHub Pages，後端用 Firebase Realtime Database 同步資料、Firebase Auth 保護後台寫入。
 
 ## 📐 五個畫面
