@@ -2,7 +2,7 @@
 // 在每個頁面 <body> 結束前載入：<script defer src="version-check.js"></script>
 
 (function () {
-  const APP_VERSION = '1.0.33';   // ← 部署時由 bump-version 腳本更新
+  const APP_VERSION = '1.0.34';   // ← 部署時由 bump-version 腳本更新
   const CHECK_INTERVAL_MS = 60 * 1000;  // 每 60 秒查一次新版
 
   // ---------- 1. 註冊 Service Worker ----------
@@ -126,8 +126,9 @@
         }
         // 退而求其次：清快取後 reload
         if ('caches' in window) {
+          // 只清本工具（little-mayor-）的快取，同網域其他工具的快取不動
           const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
+          await Promise.all(keys.filter(k => k.startsWith('little-mayor-')).map(k => caches.delete(k)));
         }
         location.reload();
       } catch (e) {
